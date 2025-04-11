@@ -22,6 +22,14 @@ public class PostService {
         return savedPost.getId();
     }
 
+    @Transactional
+    public void updatePost(Long id, PostRequest postRequest) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
+        post.setTitle(postRequest.title());
+        post.setContent(postRequest.content());
+    }
+
     public PostDetailResponse findPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
