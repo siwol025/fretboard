@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +24,7 @@ public class BoardController {
 
     @PostMapping
     public ResponseEntity<Long> createBoard(@Valid @RequestBody BoardRequest boardRequest) {
-        Long boardId = boardService.addBoard(boardRequest);
+        Long boardId = boardService.createBoard(boardRequest);
         return ResponseEntity.created(URI.create("/board/" + boardId)).build();
     }
 
@@ -38,5 +39,11 @@ public class BoardController {
     public ResponseEntity<BoardsResponse> findBoardsContents() {
         BoardsResponse boardsResponse = boardService.findBoards();
         return ResponseEntity.ok().body(boardsResponse);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBoard(@PathVariable Long id) {
+        boardService.deleteBoard(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -8,6 +8,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,8 +34,16 @@ public class Board extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private BoardType boardType;
 
+    @OneToMany(mappedBy = "board")
+    private List<PostBoard> postBoards = new ArrayList<>();
+
     @Builder
     public Board(String title, BoardType boardType) {
-        this(null, title, boardType);
+        this.title = title;
+        this.boardType = boardType;
+    }
+
+    public void addPostBoard(final PostBoard postBoard) {
+        postBoards.add(postBoard);
     }
 }

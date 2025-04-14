@@ -18,29 +18,28 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/posts")
 public class PostController {
     private final PostService postService;
 
-    @PostMapping
-    public ResponseEntity<Void> addPost(@Valid @RequestBody PostRequest postRequest) {
-        Long postId = postService.addPost(postRequest);
+    @PostMapping("/boards/{boardId}/posts")
+    public ResponseEntity<Void> addPost(@PathVariable Long boardId, @Valid @RequestBody PostRequest postRequest) {
+        Long postId = postService.addPost(boardId, postRequest);
         return ResponseEntity.created(URI.create("/posts/" + postId)).build();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/posts/{id}")
     public ResponseEntity<PostDetailResponse> findPost(@PathVariable Long id) {
         return ResponseEntity.ok().body(postService.findPost(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/posts/{id}")
     public ResponseEntity<Void> updatePost(@PathVariable Long id,
                                            @Valid @RequestBody PostRequest postRequest) {
         postService.updatePost(id, postRequest);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/posts/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
         postService.deletePost(id);
         return ResponseEntity.noContent().build();

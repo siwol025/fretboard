@@ -1,5 +1,6 @@
 package com.fretboard.fretboard.post.service;
 
+import com.fretboard.fretboard.board.service.BoardService;
 import com.fretboard.fretboard.exception.ExceptionType;
 import com.fretboard.fretboard.exception.FretBoardException;
 import com.fretboard.fretboard.post.domain.Post;
@@ -15,10 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PostService {
     private final PostRepository postRepository;
+    private final BoardService boardService;
 
     @Transactional
-    public Long addPost(PostRequest postRequest) {
+    public Long addPost(final Long boardId, final PostRequest postRequest) {
         Post savedPost = postRepository.save(postRequest.toPost());
+        boardService.savePostBoard(savedPost, boardId);
         return savedPost.getId();
     }
 
