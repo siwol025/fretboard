@@ -30,6 +30,13 @@ public class PostService {
         post.setContent(postRequest.content());
     }
 
+    @Transactional
+    public void deletePost(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
+        postRepository.delete(post);
+    }
+
     public PostDetailResponse findPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
