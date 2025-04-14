@@ -6,7 +6,9 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,5 +23,12 @@ public class BoardController {
     public ResponseEntity<Long> createBoard(@Valid @RequestBody BoardRequest boardRequest) {
         Long boardId = boardService.addBoard(boardRequest);
         return ResponseEntity.created(URI.create("/board/" + boardId)).build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> editBoardTitle(@PathVariable Long id,
+                                               @Valid @RequestBody BoardRequest boardRequest) {
+        boardService.editBoardTitle(id, boardRequest);
+        return ResponseEntity.noContent().build();
     }
 }
