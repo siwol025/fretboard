@@ -2,9 +2,12 @@ package com.fretboard.fretboard.board.service;
 
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.dto.BoardRequest;
+import com.fretboard.fretboard.board.dto.BoardsElementResponse;
+import com.fretboard.fretboard.board.dto.BoardsResponse;
 import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.exception.ExceptionType;
 import com.fretboard.fretboard.exception.FretBoardException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,5 +29,12 @@ public class BoardService {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUNT));
         board.setTitle(boardRequest.title());
+    }
+
+    public BoardsResponse findBoards() {
+        List<BoardsElementResponse> contents = boardRepository.findAll().stream()
+                .map(BoardsElementResponse::from)
+                .toList();
+        return new BoardsResponse(contents);
     }
 }
