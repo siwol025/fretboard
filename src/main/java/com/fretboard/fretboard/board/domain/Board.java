@@ -1,8 +1,10 @@
-package com.fretboard.fretboard.member.domain;
+package com.fretboard.fretboard.board.domain;
 
 import com.fretboard.fretboard.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -18,22 +20,19 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member extends BaseEntity {
+public class Board extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
-
     @Column(nullable = false)
-    private String password;
+    private String title;
 
-    @Column(nullable = false)
-    private String nickname;
+    @Enumerated(EnumType.STRING)
+    private BoardType boardType;
 
     @Builder
-    public Member(String username, String password, String nickname) {
-        this(null, username, password, nickname);
+    public Board(String title, BoardType boardType) {
+        this(null, title, boardType);
     }
 }
