@@ -1,5 +1,7 @@
 package com.fretboard.fretboard.post.service;
 
+import com.fretboard.fretboard.board.domain.PostBoard;
+import com.fretboard.fretboard.board.repository.PostBoardRepository;
 import com.fretboard.fretboard.board.service.BoardService;
 import com.fretboard.fretboard.exception.ExceptionType;
 import com.fretboard.fretboard.exception.FretBoardException;
@@ -7,6 +9,8 @@ import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.PostRequest;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PostService {
     private final PostRepository postRepository;
+    private final PostBoardRepository postBoardRepository;
     private final BoardService boardService;
 
     @Transactional
@@ -44,5 +49,13 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
         return PostDetailResponse.of(post);
+    }
+
+    public List<PostDetailResponse> findPostsByBoardId(Long boardId) {
+        List<PostBoard> posts = postBoardRepository.findPostBoardsByBoardId(boardId);
+        return posts.stream()
+                .map(PostBoard::getPost)
+                .map(PostDetailResponse::of)
+                .toList();
     }
 }
