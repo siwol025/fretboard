@@ -48,6 +48,9 @@ public class BoardService {
                 .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUNT));
 
         PostBoard postBoard = PostBoard.of(savedPost, board);
+        savedPost.addPostBoard(postBoard);
+        board.addPostBoard(postBoard);
+
         postBoardRepository.save(postBoard);
     }
 

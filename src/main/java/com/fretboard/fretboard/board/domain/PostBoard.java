@@ -41,13 +41,9 @@ public class PostBoard extends BaseEntity {
     }
 
     public static PostBoard of(Post post, Board board) {
-        PostBoard postBoard = PostBoard.builder()
+        return PostBoard.builder()
                 .post(post)
                 .board(board)
                 .build();
-
-        post.addPostBoard(postBoard);
-        board.addPostBoard(postBoard);
-        return postBoard;
     }
 }
