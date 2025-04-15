@@ -34,7 +34,7 @@ public class BoardInitializer implements CommandLineRunner {
                     .build());
         }
         Board board = boardRepository.findById(1L)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUNT));
+                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
 
         for (int i = 1; i <= 100; i++) {
             Post post = Post.builder()

@@ -40,4 +40,12 @@ public class CommentService {
                 .toList();
         return new CommentResponse(commentDetailResponses);
     }
+
+    @Transactional
+    public void editComment(Long id, CommentRequest commentRequest) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
+
+        comment.setContent(commentRequest.content());
+    }
 }

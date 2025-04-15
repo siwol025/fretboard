@@ -31,21 +31,21 @@ public class BoardService {
     @Transactional
     public void editBoardTitle(final Long id, final BoardRequest boardRequest) {
         Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUNT));
+                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
         board.setTitle(boardRequest.title());
     }
 
     @Transactional
     public void deleteBoard(final Long id) {
         Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUNT));
+                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
         boardRepository.delete(board);
     }
 
     @Transactional
     public void savePostBoard(final Post savedPost, final Long boardId) {
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUNT));
+                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
 
         PostBoard postBoard = PostBoard.of(savedPost, board);
         savedPost.addPostBoard(postBoard);
