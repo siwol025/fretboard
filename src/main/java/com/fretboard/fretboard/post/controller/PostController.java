@@ -5,6 +5,7 @@ import com.fretboard.fretboard.post.dto.PostRequest;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,6 +26,12 @@ public class PostController {
     public ResponseEntity<Void> addPost(@PathVariable Long boardId, @Valid @RequestBody PostRequest postRequest) {
         Long postId = postService.addPost(boardId, postRequest);
         return ResponseEntity.created(URI.create("/posts/" + postId)).build();
+    }
+
+    @GetMapping("/boards/{boardId}/posts")
+    public ResponseEntity<List<PostDetailResponse>> findPostsByBoardId(@PathVariable Long boardId) {
+        List<PostDetailResponse> postsResponses = postService.findPostsByBoardId(boardId);
+        return ResponseEntity.ok().body(postsResponses);
     }
 
     @GetMapping("/posts/{id}")
