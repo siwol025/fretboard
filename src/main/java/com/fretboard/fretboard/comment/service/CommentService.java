@@ -48,4 +48,11 @@ public class CommentService {
 
         comment.setContent(commentRequest.content());
     }
+
+    @Transactional
+    public void deleteComment(Long id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
+        commentRepository.delete(comment);
+    }
 }
