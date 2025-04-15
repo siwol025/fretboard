@@ -1,10 +1,8 @@
-package com.fretboard.fretboard.post.domain;
+package com.fretboard.fretboard.comment.domain;
 
-import com.fretboard.fretboard.board.domain.PostBoard;
-import com.fretboard.fretboard.comment.domain.Comment;
 import com.fretboard.fretboard.global.entity.BaseEntity;
 import com.fretboard.fretboard.member.domain.Member;
-import jakarta.persistence.CascadeType;
+import com.fretboard.fretboard.post.domain.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,10 +10,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,42 +25,41 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Post extends BaseEntity {
+public class Comment extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String title;
-
-    @Lob
-    @Column(nullable = false)
     private String content;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
-    private List<PostBoard> postBoards = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
-    private List<Comment> comments = new ArrayList<>();
+    @OneToMany(mappedBy = "parent")
+    private List<Comment> children;
 
     @Builder
-    public Post(String title, String content, Member member) {
-        this.title = title;
+    public Comment(String content, Post post, Member member, Comment parent) {
         this.content = content;
+        this.post = post;
         this.member = member;
+        this.parent = parent;
     }
 
-    public void addPostBoard(final PostBoard postBoard) {
-        postBoards.add(postBoard);
-        postBoard.setPost(this);
-    }
-
-    public void addComment(final Comment comment) {
-        comments.add(comment);
-        comment.setPost(this);
+    public static Comment parent(String content, Post post) {
+        return Comment.builder()
+                .content(content)
+                .post(post)
+                .build();
     }
 }
