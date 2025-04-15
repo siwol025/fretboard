@@ -35,10 +35,8 @@ public class CommentService {
 
     public CommentResponse findComments(Long postId) {
         List<Comment> comments = commentRepository.findCommentsByPostId(postId);
-        List<CommentDetailResponse> commentDetailResponses = comments.stream()
-                .map(CommentDetailResponse::from)
-                .toList();
-        return new CommentResponse(commentDetailResponses);
+
+        return CommentResponse.createByComments(comments);
     }
 
     @Transactional
