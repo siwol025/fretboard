@@ -2,11 +2,15 @@ package com.fretboard.fretboard.post.controller;
 
 import com.fretboard.fretboard.post.dto.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.PostRequest;
+import com.fretboard.fretboard.post.dto.PostResponse;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,15 +27,17 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/boards/{boardId}/posts")
-    public ResponseEntity<Void> addPost(@PathVariable Long boardId, @Valid @RequestBody PostRequest postRequest) {
+    public ResponseEntity<Void> addPost(@PathVariable Long boardId,
+                                        @Valid @RequestBody PostRequest postRequest) {
         Long postId = postService.addPost(boardId, postRequest);
         return ResponseEntity.created(URI.create("/posts/" + postId)).build();
     }
 
     @GetMapping("/boards/{boardId}/posts")
-    public ResponseEntity<List<PostDetailResponse>> findPostsByBoardId(@PathVariable Long boardId) {
-        List<PostDetailResponse> postsResponses = postService.findPostsByBoardId(boardId);
-        return ResponseEntity.ok().body(postsResponses);
+    public ResponseEntity<PostResponse> findPostsByBoardId(@PathVariable Long boardId,
+                                                           @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PostResponse postResponse = postService.findPostsByBoardId(boardId, pageable);
+        return ResponseEntity.ok().body(postResponse);
     }
 
     @GetMapping("/posts/{id}")

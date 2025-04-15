@@ -8,10 +8,13 @@ import com.fretboard.fretboard.exception.FretBoardException;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.PostRequest;
+import com.fretboard.fretboard.post.dto.PostResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,11 +54,8 @@ public class PostService {
         return PostDetailResponse.of(post);
     }
 
-    public List<PostDetailResponse> findPostsByBoardId(Long boardId) {
-        List<PostBoard> posts = postBoardRepository.findPostBoardsByBoardId(boardId);
-        return posts.stream()
-                .map(PostBoard::getPost)
-                .map(PostDetailResponse::of)
-                .toList();
+    public PostResponse findPostsByBoardId(Long boardId, Pageable pageable) {
+        Page<PostBoard> postBoardPage = postBoardRepository.findPostBoardsByBoardId(boardId, pageable);
+        return PostResponse.of(postBoardPage);
     }
 }

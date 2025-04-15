@@ -1,9 +1,7 @@
 package com.fretboard.fretboard.post.dto;
 
-import com.fretboard.fretboard.comment.dto.CommentDetailResponse;
 import com.fretboard.fretboard.comment.dto.CommentResponse;
 import com.fretboard.fretboard.post.domain.Post;
-import java.util.List;
 import lombok.Builder;
 
 public record PostDetailResponse(
