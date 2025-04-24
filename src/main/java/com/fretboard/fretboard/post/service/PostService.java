@@ -3,14 +3,14 @@ package com.fretboard.fretboard.post.service;
 import com.fretboard.fretboard.board.domain.PostBoard;
 import com.fretboard.fretboard.board.repository.PostBoardRepository;
 import com.fretboard.fretboard.board.service.BoardService;
-import com.fretboard.fretboard.exception.ExceptionType;
-import com.fretboard.fretboard.exception.FretBoardException;
+import com.fretboard.fretboard.global.exception.ExceptionType;
+import com.fretboard.fretboard.global.exception.FretBoardException;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostDetailResponse;
+import com.fretboard.fretboard.post.dto.PostListResponse;
 import com.fretboard.fretboard.post.dto.PostRequest;
 import com.fretboard.fretboard.post.dto.PostResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
-import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,14 +27,14 @@ public class PostService {
     private final BoardService boardService;
 
     @Transactional
-    public Long addPost(final Long boardId, final PostRequest postRequest) {
-        Post savedPost = postRepository.save(postRequest.toPost());
-        boardService.savePostBoard(savedPost, boardId);
+    public Long addPost(final PostRequest request) {
+        Post savedPost = postRepository.save(request.toPost());
+        boardService.savePostBoard(savedPost, request.boardId());
         return savedPost.getId();
     }
 
     @Transactional
-    public void updatePost(Long id, PostRequest postRequest) {
+    public void updatePost(final Long id, final PostRequest postRequest) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
         post.setTitle(postRequest.title());
@@ -42,20 +42,27 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long id) {
+    public void deletePost(final Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
         postRepository.delete(post);
     }
 
-    public PostDetailResponse findPost(Long id) {
+    public PostDetailResponse findPost(final Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
         return PostDetailResponse.of(post);
     }
 
-    public PostResponse findPostsByBoardId(Long boardId, Pageable pageable) {
+    public PostResponse findPostsByBoardId(final Long boardId, Pageable pageable) {
         Page<PostBoard> postBoardPage = postBoardRepository.findPostBoardsByBoardId(boardId, pageable);
         return PostResponse.of(postBoardPage);
+    }
+
+    public List<PostListResponse> findPosts(Pageable pageable) {
+        Page<Post> posts = postRepository.findAll(pageable);
+        return posts.stream()
+                .map(PostListResponse::of)
+                .toList();
     }
 }

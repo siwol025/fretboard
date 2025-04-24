@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -49,6 +50,7 @@ public class Post extends BaseEntity {
     private List<PostBoard> postBoards = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
+    @BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
 
     @Builder

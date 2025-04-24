@@ -3,6 +3,8 @@ package com.fretboard.fretboard.board.controller;
 import com.fretboard.fretboard.board.dto.BoardRequest;
 import com.fretboard.fretboard.board.dto.BoardsResponse;
 import com.fretboard.fretboard.board.service.BoardService;
+import com.fretboard.fretboard.global.auth.annotation.LoginMember;
+import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -18,31 +20,34 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/boards")
+@RequestMapping("/api/boards")
 public class BoardController {
     private final BoardService boardService;
 
     @PostMapping
-    public ResponseEntity<Long> createBoard(@Valid @RequestBody BoardRequest boardRequest) {
+    public ResponseEntity<Long> createBoard(@LoginMember MemberAuth memberAuth,
+                                            @Valid @RequestBody BoardRequest boardRequest) {
         Long boardId = boardService.createBoard(boardRequest);
         return ResponseEntity.created(URI.create("/board/" + boardId)).build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> editBoardTitle(@PathVariable Long id,
+                                               @LoginMember MemberAuth memberAuth,
                                                @Valid @RequestBody BoardRequest boardRequest) {
         boardService.editBoardTitle(id, boardRequest);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/contents")
+    @GetMapping
     public ResponseEntity<BoardsResponse> findBoardsContents() {
         BoardsResponse boardsResponse = boardService.findBoards();
         return ResponseEntity.ok().body(boardsResponse);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteBoard(@PathVariable Long id,
+                                            @LoginMember MemberAuth memberAuth) {
         boardService.deleteBoard(id);
         return ResponseEntity.noContent().build();
     }

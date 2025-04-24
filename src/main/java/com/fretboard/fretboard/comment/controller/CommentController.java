@@ -3,6 +3,8 @@ package com.fretboard.fretboard.comment.controller;
 import com.fretboard.fretboard.comment.dto.CommentRequest;
 import com.fretboard.fretboard.comment.dto.CommentResponse;
 import com.fretboard.fretboard.comment.service.CommentService;
+import com.fretboard.fretboard.global.auth.annotation.LoginMember;
+import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -13,15 +15,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class CommentController {
     private final CommentService commentService;
 
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<Void> addComment(@PathVariable Long postId,
+                                           @LoginMember MemberAuth memberAuth,
                                            @Valid @RequestBody CommentRequest commentRequest) {
         Long commentId = commentService.addComment(postId, commentRequest);
         return ResponseEntity.created(URI.create("/comments/" + commentId)).build();
@@ -35,13 +40,15 @@ public class CommentController {
 
     @PutMapping("/comments/{id}")
     public ResponseEntity<Void> editComment(@PathVariable Long id,
+                                            @LoginMember MemberAuth memberAuth,
                                             @Valid @RequestBody CommentRequest commentRequest) {
         commentService.editComment(id, commentRequest);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/comments/{id}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteComment(@PathVariable Long id,
+                                              @LoginMember MemberAuth memberAuth) {
         commentService.deleteComment(id);
         return ResponseEntity.noContent().build();
     }

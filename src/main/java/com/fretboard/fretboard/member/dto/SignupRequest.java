@@ -13,10 +13,10 @@ public record SignupRequest(
         @NotBlank
         String nickname
 ) {
-    public Member toMember() {
+    public Member toMember(String encryptedPassword) {
         return Member.builder()
                 .username(username)
-                .password(password)
+                .password(encryptedPassword)
                 .nickname(nickname)
                 .build();
     }

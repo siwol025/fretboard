@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:fretboard;MODE=MYSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+security:
+  jwt:
+    token:
+      secret-key: iu@Oo%V@mXI_`q[^y>Er.p4F1GZj*{!D[>D:<i$+XM^!?t7w[AM>z%1w+|'t>49
+      expire-length: 3600000
+    refresh:
+      secret-key: bwE(#THeL-+mS_138QcyEHGhUYKmTH5~NqWG"pc&Qz,%Ex~azC!a8o^@?Qll3fw
+      expire-length: 1209600000

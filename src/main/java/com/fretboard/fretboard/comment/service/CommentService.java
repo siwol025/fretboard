@@ -1,12 +1,11 @@
 package com.fretboard.fretboard.comment.service;
 
 import com.fretboard.fretboard.comment.domain.Comment;
-import com.fretboard.fretboard.comment.dto.CommentDetailResponse;
 import com.fretboard.fretboard.comment.dto.CommentRequest;
 import com.fretboard.fretboard.comment.dto.CommentResponse;
 import com.fretboard.fretboard.comment.repository.CommentRepository;
-import com.fretboard.fretboard.exception.ExceptionType;
-import com.fretboard.fretboard.exception.FretBoardException;
+import com.fretboard.fretboard.global.exception.ExceptionType;
+import com.fretboard.fretboard.global.exception.FretBoardException;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.List;
@@ -22,7 +21,7 @@ public class CommentService {
     private final PostRepository postRepository;
 
     @Transactional
-    public Long addComment(Long postId, CommentRequest commentRequest) {
+    public Long addComment(final Long postId, final CommentRequest commentRequest) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
@@ -33,14 +32,14 @@ public class CommentService {
         return comment.getId();
     }
 
-    public CommentResponse findComments(Long postId) {
+    public CommentResponse findComments(final Long postId) {
         List<Comment> comments = commentRepository.findCommentsByPostId(postId);
 
         return CommentResponse.createByComments(comments);
     }
 
     @Transactional
-    public void editComment(Long id, CommentRequest commentRequest) {
+    public void editComment(final Long id, final CommentRequest commentRequest) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
 
@@ -48,7 +47,7 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long id) {
+    public void deleteComment(final Long id) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
         commentRepository.delete(comment);

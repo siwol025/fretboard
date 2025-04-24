@@ -1,7 +1,9 @@
 package com.fretboard.fretboard.member.service;
 
-import com.fretboard.fretboard.exception.ExceptionType;
-import com.fretboard.fretboard.exception.FretBoardException;
+import com.fretboard.fretboard.auth.encryptor.PasswordEncryptor;
+import com.fretboard.fretboard.global.exception.ExceptionType;
+import com.fretboard.fretboard.global.exception.FretBoardException;
+import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.dto.SignupRequest;
 import com.fretboard.fretboard.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,11 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final PasswordEncryptor passwordEncryptor;
 
     @Transactional
     public void signup(final SignupRequest signupRequest) {
         validate(signupRequest);
-        memberRepository.save(signupRequest.toMember());
+        String encryptedPassword = passwordEncryptor.encrypt(signupRequest.password());
+        Member member = signupRequest.toMember(encryptedPassword);
+        memberRepository.save(member);
     }
 
     public void validate(final SignupRequest signupRequest) {

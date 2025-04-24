@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 
 public record PostResponse(
-        List<PostDetailResponse> posts,
+        List<PostListResponse> posts,
         int currentPage,
         int totalPages,
         long totalElements,
@@ -13,9 +13,9 @@ public record PostResponse(
         boolean isLast
 ) {
     public static PostResponse of(Page<PostBoard> page) {
-        List<PostDetailResponse> content = page.getContent().stream()
+        List<PostListResponse> content = page.getContent().stream()
                 .map(PostBoard::getPost)
-                .map(PostDetailResponse::of)
+                .map(PostListResponse::of)
                 .toList();
 
         return new PostResponse(

@@ -2,21 +2,10 @@ spring:
   application:
     name: FretBoard
 
-  datasource:
-    url: jdbc:h2:mem:fretboard
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+  profiles:
+    active: prod
 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
-  jpa:
-    hibernate:
-      ddl-auto: create
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
+    logging:
+      level:
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE

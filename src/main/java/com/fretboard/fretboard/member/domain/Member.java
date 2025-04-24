@@ -36,4 +36,8 @@ public class Member extends BaseEntity {
     public Member(String username, String password, String nickname) {
         this(null, username, password, nickname);
     }
+
+    public boolean matchPassword(String password) {
+        return this.password.equals(password);
+    }
 }

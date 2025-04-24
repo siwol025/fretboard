@@ -1,6 +1,9 @@
 package com.fretboard.fretboard.post.controller;
 
+import com.fretboard.fretboard.global.auth.annotation.LoginMember;
+import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.post.dto.PostDetailResponse;
+import com.fretboard.fretboard.post.dto.PostListResponse;
 import com.fretboard.fretboard.post.dto.PostRequest;
 import com.fretboard.fretboard.post.dto.PostResponse;
 import com.fretboard.fretboard.post.service.PostService;
@@ -19,41 +22,50 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/posts")
 public class PostController {
     private final PostService postService;
 
-    @PostMapping("/boards/{boardId}/posts")
-    public ResponseEntity<Void> addPost(@PathVariable Long boardId,
-                                        @Valid @RequestBody PostRequest postRequest) {
-        Long postId = postService.addPost(boardId, postRequest);
+    @PostMapping
+    public ResponseEntity<Void> addPost(@Valid @RequestBody PostRequest request,
+                                        @LoginMember MemberAuth memberAuth) {
+        Long postId = postService.addPost(request);
         return ResponseEntity.created(URI.create("/posts/" + postId)).build();
     }
 
-    @GetMapping("/boards/{boardId}/posts")
-    public ResponseEntity<PostResponse> findPostsByBoardId(@PathVariable Long boardId,
+    @GetMapping(params = "boardId")
+    public ResponseEntity<PostResponse> findPostsByBoardId(@RequestParam Long boardId,
                                                            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PostResponse postResponse = postService.findPostsByBoardId(boardId, pageable);
         return ResponseEntity.ok().body(postResponse);
     }
 
-    @GetMapping("/posts/{id}")
+    @GetMapping
+    public ResponseEntity<List<PostListResponse>> findPosts(@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok().body(postService.findPosts(pageable));
+    }
+
+    @GetMapping("/{id}")
     public ResponseEntity<PostDetailResponse> findPost(@PathVariable Long id) {
         return ResponseEntity.ok().body(postService.findPost(id));
     }
 
-    @PutMapping("/posts/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> updatePost(@PathVariable Long id,
-                                           @Valid @RequestBody PostRequest postRequest) {
+                                           @Valid @RequestBody PostRequest postRequest,
+                                           @LoginMember MemberAuth memberAuth) {
         postService.updatePost(id, postRequest);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/posts/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id,
+                                           @LoginMember MemberAuth memberAuth) {
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
     }
