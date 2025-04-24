@@ -3,8 +3,8 @@ package com.fretboard.fretboard.board.service;
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.domain.PostBoard;
 import com.fretboard.fretboard.board.dto.BoardRequest;
-import com.fretboard.fretboard.board.dto.BoardsElementResponse;
-import com.fretboard.fretboard.board.dto.BoardsResponse;
+import com.fretboard.fretboard.board.dto.BoardElementResponse;
+import com.fretboard.fretboard.board.dto.BoardListResponse;
 import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.board.repository.PostBoardRepository;
 import com.fretboard.fretboard.global.exception.ExceptionType;
@@ -54,10 +54,10 @@ public class BoardService {
         postBoardRepository.save(postBoard);
     }
 
-    public BoardsResponse findBoards() {
-        List<BoardsElementResponse> contents = boardRepository.findAll().stream()
-                .map(BoardsElementResponse::from)
+    public BoardListResponse findBoards() {
+        List<BoardElementResponse> contents = boardRepository.findAll().stream()
+                .map(BoardElementResponse::from)
                 .toList();
-        return new BoardsResponse(contents);
+        return new BoardListResponse(contents);
     }
 }

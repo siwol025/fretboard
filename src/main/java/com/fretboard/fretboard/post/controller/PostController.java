@@ -3,9 +3,9 @@ package com.fretboard.fretboard.post.controller;
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.post.dto.PostDetailResponse;
-import com.fretboard.fretboard.post.dto.PostListResponse;
+import com.fretboard.fretboard.post.dto.PostSummaryResponse;
 import com.fretboard.fretboard.post.dto.PostRequest;
-import com.fretboard.fretboard.post.dto.PostResponse;
+import com.fretboard.fretboard.post.dto.PostListResponse;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -39,14 +39,14 @@ public class PostController {
     }
 
     @GetMapping(params = "boardId")
-    public ResponseEntity<PostResponse> findPostsByBoardId(@RequestParam Long boardId,
-                                                           @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        PostResponse postResponse = postService.findPostsByBoardId(boardId, pageable);
-        return ResponseEntity.ok().body(postResponse);
+    public ResponseEntity<PostListResponse> findPostsByBoardId(@RequestParam Long boardId,
+                                                               @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PostListResponse response = postService.findPostsByBoardId(boardId, pageable);
+        return ResponseEntity.ok().body(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<PostListResponse>> findPosts(@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<List<PostSummaryResponse>> findPosts(@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok().body(postService.findPosts(pageable));
     }
 

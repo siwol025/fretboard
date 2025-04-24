@@ -7,9 +7,9 @@ import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostDetailResponse;
-import com.fretboard.fretboard.post.dto.PostListResponse;
+import com.fretboard.fretboard.post.dto.PostSummaryResponse;
 import com.fretboard.fretboard.post.dto.PostRequest;
-import com.fretboard.fretboard.post.dto.PostResponse;
+import com.fretboard.fretboard.post.dto.PostListResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +34,11 @@ public class PostService {
     }
 
     @Transactional
-    public void updatePost(final Long id, final PostRequest postRequest) {
+    public void updatePost(final Long id, final PostRequest request) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
-        post.setTitle(postRequest.title());
-        post.setContent(postRequest.content());
+        post.setTitle(request.title());
+        post.setContent(request.content());
     }
 
     @Transactional
@@ -54,15 +54,15 @@ public class PostService {
         return PostDetailResponse.of(post);
     }
 
-    public PostResponse findPostsByBoardId(final Long boardId, Pageable pageable) {
+    public PostListResponse findPostsByBoardId(final Long boardId, Pageable pageable) {
         Page<PostBoard> postBoardPage = postBoardRepository.findPostBoardsByBoardId(boardId, pageable);
-        return PostResponse.of(postBoardPage);
+        return PostListResponse.of(postBoardPage);
     }
 
-    public List<PostListResponse> findPosts(Pageable pageable) {
+    public List<PostSummaryResponse> findPosts(Pageable pageable) {
         Page<Post> posts = postRepository.findAll(pageable);
         return posts.stream()
-                .map(PostListResponse::of)
+                .map(PostSummaryResponse::of)
                 .toList();
     }
 }

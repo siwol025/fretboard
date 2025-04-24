@@ -1,7 +1,7 @@
 package com.fretboard.fretboard.board.controller;
 
 import com.fretboard.fretboard.board.dto.BoardRequest;
-import com.fretboard.fretboard.board.dto.BoardsResponse;
+import com.fretboard.fretboard.board.dto.BoardListResponse;
 import com.fretboard.fretboard.board.service.BoardService;
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
@@ -40,9 +40,9 @@ public class BoardController {
     }
 
     @GetMapping
-    public ResponseEntity<BoardsResponse> findBoardsContents() {
-        BoardsResponse boardsResponse = boardService.findBoards();
-        return ResponseEntity.ok().body(boardsResponse);
+    public ResponseEntity<BoardListResponse> findBoardsContents() {
+        BoardListResponse response = boardService.findBoards();
+        return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping("/{id}")
