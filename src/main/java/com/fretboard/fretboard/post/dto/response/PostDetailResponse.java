@@ -1,4 +1,4 @@
-package com.fretboard.fretboard.post.dto;
+package com.fretboard.fretboard.post.dto.response;
 
 import com.fretboard.fretboard.comment.dto.CommentResponse;
 import com.fretboard.fretboard.post.domain.Post;

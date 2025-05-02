@@ -1,4 +1,4 @@
-package com.fretboard.fretboard.post.dto;
+package com.fretboard.fretboard.post.dto.response;
 
 import com.fretboard.fretboard.board.domain.PostBoard;
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.fretboard.fretboard.board.controller;
 
-import com.fretboard.fretboard.board.dto.BoardRequest;
-import com.fretboard.fretboard.board.dto.BoardListResponse;
+import com.fretboard.fretboard.board.dto.request.BoardRequest;
+import com.fretboard.fretboard.board.dto.response.BoardListResponse;
 import com.fretboard.fretboard.board.service.BoardService;
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;

@@ -2,10 +2,10 @@ package com.fretboard.fretboard.post.controller;
 
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
-import com.fretboard.fretboard.post.dto.PostDetailResponse;
-import com.fretboard.fretboard.post.dto.PostSummaryResponse;
-import com.fretboard.fretboard.post.dto.PostRequest;
-import com.fretboard.fretboard.post.dto.PostListResponse;
+import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
+import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
+import com.fretboard.fretboard.post.dto.request.PostRequest;
+import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import java.net.URI;

@@ -1,11 +1,9 @@
-package com.fretboard.fretboard.post.dto;
+package com.fretboard.fretboard.post.dto.request;
 
 import com.fretboard.fretboard.post.domain.Post;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public record PostRequest(
-        @NotNull
         Long boardId,
 
         @NotBlank(message = "제목을 입력해주세요.")

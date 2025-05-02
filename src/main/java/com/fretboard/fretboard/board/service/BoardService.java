@@ -2,9 +2,9 @@ package com.fretboard.fretboard.board.service;
 
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.domain.PostBoard;
-import com.fretboard.fretboard.board.dto.BoardRequest;
-import com.fretboard.fretboard.board.dto.BoardElementResponse;
-import com.fretboard.fretboard.board.dto.BoardListResponse;
+import com.fretboard.fretboard.board.dto.request.BoardRequest;
+import com.fretboard.fretboard.board.dto.response.BoardElementResponse;
+import com.fretboard.fretboard.board.dto.response.BoardListResponse;
 import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.board.repository.PostBoardRepository;
 import com.fretboard.fretboard.global.exception.ExceptionType;
