@@ -31,6 +31,12 @@ public class Board extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
+    private String description;
+
+    @Column(unique = true, nullable = false, length = 50)
+    private String slug;
+
     @Enumerated(EnumType.STRING)
     private BoardType boardType;
 
