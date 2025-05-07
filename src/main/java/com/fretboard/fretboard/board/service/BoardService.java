@@ -2,9 +2,10 @@ package com.fretboard.fretboard.board.service;
 
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.domain.PostBoard;
-import com.fretboard.fretboard.board.dto.request.BoardRequest;
+import com.fretboard.fretboard.board.dto.request.NewBoardRequest;
 import com.fretboard.fretboard.board.dto.response.BoardElementResponse;
 import com.fretboard.fretboard.board.dto.response.BoardListResponse;
+import com.fretboard.fretboard.board.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.board.repository.PostBoardRepository;
 import com.fretboard.fretboard.global.exception.ExceptionType;
@@ -23,16 +24,16 @@ public class BoardService {
     private final PostBoardRepository postBoardRepository;
 
     @Transactional
-    public Long createBoard(final BoardRequest boardRequest) {
-        Board saveBoard = boardRepository.save(boardRequest.toBoard());
+    public Long createBoard(final NewBoardRequest request) {
+        Board saveBoard = boardRepository.save(request.toBoard());
         return saveBoard.getId();
     }
 
     @Transactional
-    public void editBoardTitle(final Long id, final BoardRequest boardRequest) {
+    public void editBoardTitle(final Long id, final NewBoardRequest request) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
-        board.setTitle(boardRequest.title());
+        board.setTitle(request.title());
     }
 
     @Transactional
@@ -59,5 +60,10 @@ public class BoardService {
                 .map(BoardElementResponse::from)
                 .toList();
         return new BoardListResponse(contents);
+    }
+
+    public List<RecentPostsPerBoardResponse> findRecentPostsPerBoard() {
+        List<PostBoard> recentPostsPerBoards = postBoardRepository.findRecentPostsPerBoards();
+        return RecentPostsPerBoardResponse.of(recentPostsPerBoards);
     }
 }

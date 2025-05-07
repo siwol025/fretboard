@@ -1,12 +1,14 @@
 package com.fretboard.fretboard.board.controller;
 
-import com.fretboard.fretboard.board.dto.request.BoardRequest;
+import com.fretboard.fretboard.board.dto.request.NewBoardRequest;
 import com.fretboard.fretboard.board.dto.response.BoardListResponse;
+import com.fretboard.fretboard.board.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.board.service.BoardService;
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,22 +28,28 @@ public class BoardController {
 
     @PostMapping
     public ResponseEntity<Long> createBoard(@LoginMember MemberAuth memberAuth,
-                                            @Valid @RequestBody BoardRequest boardRequest) {
-        Long boardId = boardService.createBoard(boardRequest);
+                                            @Valid @RequestBody NewBoardRequest request) {
+        Long boardId = boardService.createBoard(request);
         return ResponseEntity.created(URI.create("/board/" + boardId)).build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> editBoardTitle(@PathVariable Long id,
                                                @LoginMember MemberAuth memberAuth,
-                                               @Valid @RequestBody BoardRequest boardRequest) {
-        boardService.editBoardTitle(id, boardRequest);
+                                               @Valid @RequestBody NewBoardRequest request) {
+        boardService.editBoardTitle(id, request);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
     public ResponseEntity<BoardListResponse> findBoardsContents() {
         BoardListResponse response = boardService.findBoards();
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/recent-posts")
+    public ResponseEntity<List<RecentPostsPerBoardResponse>> findBoardsRecentPosts() {
+        List<RecentPostsPerBoardResponse> response = boardService.findRecentPostsPerBoard();
         return ResponseEntity.ok().body(response);
     }
 

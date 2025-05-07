@@ -44,8 +44,10 @@ public class Board extends BaseEntity {
     private List<PostBoard> postBoards = new ArrayList<>();
 
     @Builder
-    public Board(String title, BoardType boardType) {
+    public Board(String title, String description, String slug, BoardType boardType) {
         this.title = title;
+        this.description = description;
+        this.slug = slug;
         this.boardType = boardType;
     }
 
