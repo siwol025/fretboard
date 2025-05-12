@@ -1,5 +1,6 @@
 package com.fretboard.fretboard.auth.service;
 
+import com.fretboard.fretboard.auth.dto.LoginInfoDto;
 import com.fretboard.fretboard.auth.dto.request.LoginRequest;
 import com.fretboard.fretboard.auth.dto.request.TokenReissueRequest;
 import com.fretboard.fretboard.auth.dto.response.LoginResponse;
@@ -28,14 +29,14 @@ public class LoginService {
         String encryptedPassword = passwordEncryptor.encrypt(request.password());
         validatePassword(member, encryptedPassword);
 
-        return LoginResponse.of(member, jwtTokenProvider.createToken(member.getId()));
+        return LoginResponse.of(member, jwtTokenProvider.createToken(LoginInfoDto.of(member)));
     }
 
     public LoginResponse reissueToken(TokenReissueRequest request) {
         String memberId = jwtTokenProvider.decodeRefreshToken(request.reissueToken());
         Member member = memberRepository.findById(Long.valueOf(memberId))
                 .orElseThrow(() -> new FretBoardException(ExceptionType.MEMBER_NOT_FOUND));
-        return LoginResponse.of(member, jwtTokenProvider.createToken(member.getId()));
+        return LoginResponse.of(member, jwtTokenProvider.createToken(LoginInfoDto.of(member)));
     }
 
     private void validatePassword(Member member, String password) {

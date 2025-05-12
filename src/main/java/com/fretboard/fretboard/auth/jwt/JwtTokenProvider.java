@@ -1,5 +1,6 @@
 package com.fretboard.fretboard.auth.jwt;
 
+import com.fretboard.fretboard.auth.dto.LoginInfoDto;
 import com.fretboard.fretboard.auth.dto.response.TokenResponse;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Component;
 public class JwtTokenProvider {
 
     private static final String MEMBER_ID_KEY = "id";
+    private static final String MEMBER_USERNAME_KEY = "username";
+    private static final String MEMBER_NICKNAME_KEY = "nickname";
 
     private final String accessSecretKey;
     private final String refreshSecretKey;
@@ -34,19 +37,21 @@ public class JwtTokenProvider {
         this.refreshExpiration = refreshExpiration;
     }
 
-    public TokenResponse createToken(Long memberId) {
-        String accessToken = createToken(memberId, accessSecretKey, accessExpiration);
-        String refreshToken = createToken(memberId, refreshSecretKey, refreshExpiration);
+    public TokenResponse createToken(LoginInfoDto loginInfo) {
+        String accessToken = createToken(loginInfo, accessSecretKey, accessExpiration);
+        String refreshToken = createToken(loginInfo, refreshSecretKey, refreshExpiration);
         return new TokenResponse(accessToken, refreshToken);
     }
 
-    private String createToken(Long memberId, String secretKey, long expiration) {
+    private String createToken(LoginInfoDto loginInfo, String secretKey, long expiration) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-                .setSubject(memberId.toString())
-                .claim(MEMBER_ID_KEY, memberId)
+                .setSubject(loginInfo.memberId().toString())
+                .claim(MEMBER_ID_KEY, loginInfo.memberId())
+                .claim(MEMBER_USERNAME_KEY, loginInfo.username())
+                .claim(MEMBER_NICKNAME_KEY, loginInfo.nickname())
                 .setExpiration(validity)
                 .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()), SignatureAlgorithm.HS256)
                 .setHeaderParam("typ", "JWT")
