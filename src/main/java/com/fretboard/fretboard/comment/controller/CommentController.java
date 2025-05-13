@@ -1,7 +1,7 @@
 package com.fretboard.fretboard.comment.controller;
 
-import com.fretboard.fretboard.comment.dto.CommentRequest;
-import com.fretboard.fretboard.comment.dto.CommentResponse;
+import com.fretboard.fretboard.comment.dto.request.CommentRequest;
+import com.fretboard.fretboard.comment.dto.response.CommentResponse;
 import com.fretboard.fretboard.comment.service.CommentService;
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;

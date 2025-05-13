@@ -1,8 +1,8 @@
 package com.fretboard.fretboard.comment.service;
 
 import com.fretboard.fretboard.comment.domain.Comment;
-import com.fretboard.fretboard.comment.dto.CommentRequest;
-import com.fretboard.fretboard.comment.dto.CommentResponse;
+import com.fretboard.fretboard.comment.dto.request.CommentRequest;
+import com.fretboard.fretboard.comment.dto.response.CommentResponse;
 import com.fretboard.fretboard.comment.repository.CommentRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;

@@ -40,18 +40,11 @@ public class Board extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private BoardType boardType;
 
-    @OneToMany(mappedBy = "board")
-    private List<PostBoard> postBoards = new ArrayList<>();
-
     @Builder
     public Board(String title, String description, String slug, BoardType boardType) {
         this.title = title;
         this.description = description;
         this.slug = slug;
         this.boardType = boardType;
-    }
-
-    public void addPostBoard(final PostBoard postBoard) {
-        postBoards.add(postBoard);
     }
 }

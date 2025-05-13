@@ -1,6 +1,6 @@
 package com.fretboard.fretboard.post.dto.response;
 
-import com.fretboard.fretboard.comment.dto.CommentResponse;
+import com.fretboard.fretboard.comment.dto.response.CommentResponse;
 import com.fretboard.fretboard.post.domain.Post;
 import java.time.LocalDateTime;
 import lombok.Builder;

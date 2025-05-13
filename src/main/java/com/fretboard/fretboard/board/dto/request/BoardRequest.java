@@ -5,7 +5,7 @@ import com.fretboard.fretboard.board.domain.BoardType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record NewBoardRequest(
+public record BoardRequest(
         @NotBlank
         String title,
 

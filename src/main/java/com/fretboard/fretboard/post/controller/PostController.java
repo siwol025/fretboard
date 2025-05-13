@@ -7,6 +7,7 @@ import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
 import com.fretboard.fretboard.post.dto.request.NewPostRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -46,11 +47,6 @@ public class PostController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping
-    public ResponseEntity<List<PostSummaryResponse>> findPosts(@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok().body(postService.findPosts(pageable));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<PostDetailResponse> findPost(@PathVariable Long id) {
         return ResponseEntity.ok().body(postService.findPost(id));
@@ -69,5 +65,11 @@ public class PostController {
                                            @LoginMember MemberAuth memberAuth) {
         postService.deletePost(id, memberAuth);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/recent-posts")
+    public ResponseEntity<List<RecentPostsPerBoardResponse>> findBoardsRecentPosts() {
+        List<RecentPostsPerBoardResponse> response = postService.findRecentPostsPerBoard();
+        return ResponseEntity.ok().body(response);
     }
 }

@@ -1,4 +1,4 @@
-package com.fretboard.fretboard.comment.dto;
+package com.fretboard.fretboard.comment.dto.response;
 
 import com.fretboard.fretboard.comment.domain.Comment;
 import java.time.LocalDateTime;

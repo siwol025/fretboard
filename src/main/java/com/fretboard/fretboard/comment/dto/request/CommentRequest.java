@@ -1,4 +1,4 @@
-package com.fretboard.fretboard.comment.dto;
+package com.fretboard.fretboard.comment.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

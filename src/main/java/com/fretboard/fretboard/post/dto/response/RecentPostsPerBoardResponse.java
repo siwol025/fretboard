@@ -1,7 +1,6 @@
-package com.fretboard.fretboard.board.dto.response;
+package com.fretboard.fretboard.post.dto.response;
 
-import com.fretboard.fretboard.board.domain.PostBoard;
-import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
+import com.fretboard.fretboard.post.domain.Post;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,13 +13,13 @@ public record RecentPostsPerBoardResponse(
         String boardSlug,
         List<PostSummaryResponse> posts
 ) {
-    public static List<RecentPostsPerBoardResponse> of(List<PostBoard> postBoards) {
-        return postBoards.stream()
+    public static List<RecentPostsPerBoardResponse> of(List<Post> posts) {
+        return posts.stream()
                 .collect(Collectors.groupingBy(
-                        pb -> new BoardKey(pb.getBoard().getId(), pb.getBoard().getTitle(), pb.getBoard().getSlug()),
+                        p -> new BoardKey(p.getBoard().getId(), p.getBoard().getTitle(), p.getBoard().getSlug()),
                         LinkedHashMap::new,
                         Collectors.mapping(
-                                pb -> PostSummaryResponse.of(pb.getPost()),
+                                PostSummaryResponse::of,
                                 Collectors.toList()
                         )
                 ))

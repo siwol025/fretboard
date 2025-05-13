@@ -1,8 +1,7 @@
 package com.fretboard.fretboard.post.service;
 
-import com.fretboard.fretboard.board.domain.PostBoard;
-import com.fretboard.fretboard.board.repository.PostBoardRepository;
-import com.fretboard.fretboard.board.service.BoardService;
+import com.fretboard.fretboard.board.domain.Board;
+import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
@@ -15,6 +14,7 @@ import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
 import com.fretboard.fretboard.post.dto.request.NewPostRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,20 +32,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PostService {
     private final PostRepository postRepository;
-    private final PostBoardRepository postBoardRepository;
-    private final BoardService boardService;
     private final MemberRepository memberRepository;
     private final AwsS3Provider awsS3Provider;
+    private final BoardRepository boardRepository;
 
     @Transactional
     public Long addPost(final NewPostRequest request, final MemberAuth memberAuth) {
-        Member member = getMember(memberAuth);
-
-        Post post = request.toPost(member);
+        Post post = request.toPost(getMember(memberAuth), getBoard(request.boardId()));
         post.setContent(convertTempImageUrlsToPermanent(post.getContent()));
 
         Post savedPost = postRepository.save(post);
-        boardService.savePostBoard(savedPost, request.boardId());
+        //boardService.savePostBoard(savedPost, request.boardId());
         return savedPost.getId();
     }
 
@@ -75,20 +72,18 @@ public class PostService {
     }
 
     public PostListResponse findPostsByBoardId(final Long boardId, Pageable pageable) {
-        Page<PostBoard> postBoardPage = postBoardRepository.findPostBoardsByBoardId(boardId, pageable);
+        Page<Post> postBoardPage = postRepository.findByBoardId(boardId,pageable);
         return PostListResponse.of(postBoardPage);
-    }
-
-    public List<PostSummaryResponse> findPosts(Pageable pageable) {
-        Page<Post> posts = postRepository.findAll(pageable);
-        return posts.stream()
-                .map(PostSummaryResponse::of)
-                .toList();
     }
 
     private Member getMember(final MemberAuth memberAuth) {
         return memberRepository.findById(memberAuth.memberId())
                 .orElseThrow(() -> new FretBoardException(ExceptionType.MEMBER_NOT_FOUND));
+    }
+
+    private Board getBoard(final Long boardId) {
+        return boardRepository.findById(boardId)
+                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
     }
 
     private String convertTempImageUrlsToPermanent(String htmlContent) {
@@ -108,5 +103,10 @@ public class PostService {
         if (!author.equals(loginMember)) {
             throw new FretBoardException(ExceptionType.NOT_AUTHOR);
         }
+    }
+
+    public List<RecentPostsPerBoardResponse> findRecentPostsPerBoard() {
+        List<Post> recentPostsPerBoards = postRepository.findRecentPostsPerBoards();
+        return RecentPostsPerBoardResponse.of(recentPostsPerBoards);
     }
 }
