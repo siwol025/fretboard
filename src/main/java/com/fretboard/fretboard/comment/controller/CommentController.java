@@ -27,8 +27,8 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<Void> addComment(@PathVariable Long postId,
                                            @LoginMember MemberAuth memberAuth,
-                                           @Valid @RequestBody CommentRequest commentRequest) {
-        Long commentId = commentService.addComment(postId, commentRequest);
+                                           @Valid @RequestBody CommentRequest request) {
+        Long commentId = commentService.addComment(postId, request, memberAuth);
         return ResponseEntity.created(URI.create("/comments/" + commentId)).build();
     }
 
@@ -41,15 +41,15 @@ public class CommentController {
     @PutMapping("/comments/{id}")
     public ResponseEntity<Void> editComment(@PathVariable Long id,
                                             @LoginMember MemberAuth memberAuth,
-                                            @Valid @RequestBody CommentRequest commentRequest) {
-        commentService.editComment(id, commentRequest);
+                                            @Valid @RequestBody CommentRequest request) {
+        commentService.editComment(id, request, memberAuth);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long id,
                                               @LoginMember MemberAuth memberAuth) {
-        commentService.deleteComment(id);
+        commentService.deleteComment(id, memberAuth);
         return ResponseEntity.noContent().build();
     }
 }

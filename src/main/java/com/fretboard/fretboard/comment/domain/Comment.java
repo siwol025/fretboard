@@ -56,10 +56,11 @@ public class Comment extends BaseEntity {
         this.parent = parent;
     }
 
-    public static Comment parent(String content, Post post) {
+    public static Comment parent(String content, Member member, Post post) {
         return Comment.builder()
                 .content(content)
                 .post(post)
+                .member(member)
                 .build();
     }
 }

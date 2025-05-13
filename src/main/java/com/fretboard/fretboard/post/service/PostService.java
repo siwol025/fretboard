@@ -54,9 +54,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
-        Member loginMember = getMember(memberAuth);
-        validateIsAuthor(post.getMember(), loginMember);
-
+        validateIsAuthor(post.getMember(), getMember(memberAuth));
         post.setTitle(request.title());
         post.setContent(convertTempImageUrlsToPermanent(request.content()));
     }
@@ -66,9 +64,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
-        Member loginMember = getMember(memberAuth);
-        validateIsAuthor(post.getMember(), loginMember);
-
+        validateIsAuthor(post.getMember(), getMember(memberAuth));
         postRepository.delete(post);
     }
 
