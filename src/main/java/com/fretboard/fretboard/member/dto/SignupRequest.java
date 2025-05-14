@@ -1,6 +1,7 @@
 package com.fretboard.fretboard.member.dto;
 
 import com.fretboard.fretboard.member.domain.Member;
+import com.fretboard.fretboard.member.domain.Role;
 import jakarta.validation.constraints.NotBlank;
 
 public record SignupRequest(
@@ -18,6 +19,7 @@ public record SignupRequest(
                 .username(username)
                 .password(encryptedPassword)
                 .nickname(nickname)
+                .role(Role.USER)
                 .build();
     }
 }

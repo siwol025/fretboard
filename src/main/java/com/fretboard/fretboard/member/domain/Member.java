@@ -3,6 +3,8 @@ package com.fretboard.fretboard.member.domain;
 import com.fretboard.fretboard.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,12 +36,20 @@ public class Member extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String nickname;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @Builder
-    public Member(String username, String password, String nickname) {
-        this(null, username, password, nickname);
+    public Member(String username, String password, String nickname, Role role) {
+        this(null, username, password, nickname, role);
     }
 
     public boolean matchPassword(String password) {
         return this.password.equals(password);
+    }
+
+    public boolean isAdmin() {
+        return this.role.isAdmin();
     }
 }
