@@ -9,6 +9,7 @@ public enum ExceptionType {
     BOARD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 게시판을 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
+    S3_NOT_FOUND(HttpStatus.NOT_FOUND, "S3에 해당 이미지가 존재하지 않습니다."),
 
     DUPLICATION_USERNAME(HttpStatus.BAD_REQUEST, "중복된 아이디입니다."),
     DUPLICATION_NICKNAME(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),
@@ -22,9 +23,9 @@ public enum ExceptionType {
 
     S3_UPLOAD_EXCEPTION(HttpStatus.BAD_REQUEST, "S3에 이미지 업로드 중 오류가 발생했습니다."),
     S3_FORMAT_EXCEPTION(HttpStatus.BAD_REQUEST, "S3 이미지 url 형식이 잘못되었습니다."),
-    S3_NOT_FOUND(HttpStatus.NOT_FOUND, "S3에 해당 이미지가 존재하지 않습니다."),
-    S3_DELETE_EXCEPTION(HttpStatus.BAD_REQUEST, "S3에서 이미지 삭제 중 오류가 발생했습니다.");
+    S3_DELETE_EXCEPTION(HttpStatus.BAD_REQUEST, "S3에서 이미지 삭제 중 오류가 발생했습니다."),
 
+    FORBIDDEN_WRITE_PERMISSION(HttpStatus.FORBIDDEN, "글쓰기 권한이 없습니다.");
     private final HttpStatus httpStatus;
     private final String message;
 

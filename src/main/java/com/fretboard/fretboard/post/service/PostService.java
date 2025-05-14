@@ -33,7 +33,10 @@ public class PostService {
 
     @Transactional
     public Long addPost(final NewPostRequest request, final MemberAuth memberAuth) {
-        Post post = request.toPost(getMember(memberAuth), getBoard(request.boardId()));
+        Member loginMember = getMember(memberAuth);
+        Board board = getBoard(request.boardId());
+        board.validateWritable(loginMember);
+        Post post = request.toPost(loginMember, board);
 
         String convertedContent = imageService.convertTempImageUrlsToPermanent(post.getContent());
         post.setContent(convertedContent);

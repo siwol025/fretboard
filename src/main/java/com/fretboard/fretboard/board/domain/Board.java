@@ -1,6 +1,9 @@
 package com.fretboard.fretboard.board.domain;
 
 import com.fretboard.fretboard.global.entity.BaseEntity;
+import com.fretboard.fretboard.global.exception.ExceptionType;
+import com.fretboard.fretboard.global.exception.FretBoardException;
+import com.fretboard.fretboard.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -46,5 +49,11 @@ public class Board extends BaseEntity {
         this.description = description;
         this.slug = slug;
         this.boardType = boardType;
+    }
+
+    public void validateWritable(Member member) {
+        if (!this.boardType.canWrite(member)) {
+            throw new FretBoardException(ExceptionType.FORBIDDEN_WRITE_PERMISSION);
+        }
     }
 }
