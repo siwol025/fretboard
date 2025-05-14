@@ -34,26 +34,34 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    public ResponseEntity<Void> addPost(@Valid @RequestBody NewPostRequest request,
+    public ResponseEntity<Void> createPost(@Valid @RequestBody NewPostRequest request,
                                         @LoginMember MemberAuth memberAuth) {
         Long postId = postService.addPost(request, memberAuth);
         return ResponseEntity.created(URI.create("/posts/" + postId)).build();
     }
 
     @GetMapping(params = "boardId")
-    public ResponseEntity<PostListResponse> findPostsByBoardId(@RequestParam Long boardId,
+    public ResponseEntity<PostListResponse> getPostsByBoardId(@RequestParam Long boardId,
                                                                @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PostListResponse response = postService.findPostsByBoardId(boardId, pageable);
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping(params = {"boardId","keyword"})
+    public ResponseEntity<PostListResponse> searchPosts(@RequestParam Long boardId,
+                                                                 @RequestParam String keyword,
+                                                                 @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PostListResponse response = postService.searchPosts(boardId, keyword, pageable);
+        return ResponseEntity.ok().body(response);
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<PostDetailResponse> findPost(@PathVariable Long id) {
+    public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long id) {
         return ResponseEntity.ok().body(postService.findPost(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updatePost(@PathVariable Long id,
+    public ResponseEntity<Void> updatePostDetails(@PathVariable Long id,
                                            @Valid @RequestBody EditPostRequest postRequest,
                                            @LoginMember MemberAuth memberAuth) {
         postService.updatePost(id, postRequest, memberAuth);
@@ -61,14 +69,14 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id,
+    public ResponseEntity<Void> removePost(@PathVariable Long id,
                                            @LoginMember MemberAuth memberAuth) {
         postService.deletePost(id, memberAuth);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/recent-posts")
-    public ResponseEntity<List<RecentPostsPerBoardResponse>> findBoardsRecentPosts() {
+    public ResponseEntity<List<RecentPostsPerBoardResponse>> getRecentPostsPerBoard() {
         List<RecentPostsPerBoardResponse> response = postService.findRecentPostsPerBoard();
         return ResponseEntity.ok().body(response);
     }

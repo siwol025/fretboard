@@ -77,8 +77,13 @@ public class PostService {
     }
 
     public PostListResponse findPostsByBoardId(final Long boardId, Pageable pageable) {
-        Page<Post> postBoardPage = postRepository.findByBoardId(boardId,pageable);
-        return PostListResponse.of(postBoardPage);
+        Page<Post> posts = postRepository.findByBoardId(boardId,pageable);
+        return PostListResponse.of(posts);
+    }
+
+    public PostListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
+        Page<Post> posts = postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable);
+        return PostListResponse.of(posts);
     }
 
     private Member getMember(final MemberAuth memberAuth) {
