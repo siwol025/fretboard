@@ -1,6 +1,7 @@
 package com.fretboard.fretboard.board.controller;
 
 import com.fretboard.fretboard.board.dto.request.BoardRequest;
+import com.fretboard.fretboard.board.dto.response.BoardElementResponse;
 import com.fretboard.fretboard.board.dto.response.BoardListResponse;
 import com.fretboard.fretboard.board.service.BoardService;
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
@@ -42,6 +43,12 @@ public class BoardController {
     @GetMapping
     public ResponseEntity<BoardListResponse> findBoardsContents() {
         BoardListResponse response = boardService.findBoards();
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BoardElementResponse> findBoard(@PathVariable Long id) {
+        BoardElementResponse response = boardService.findBoard(id);
         return ResponseEntity.ok().body(response);
     }
 

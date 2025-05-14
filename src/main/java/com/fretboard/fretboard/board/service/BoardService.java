@@ -43,8 +43,14 @@ public class BoardService {
 
     public BoardListResponse findBoards() {
         List<BoardElementResponse> contents = boardRepository.findAll().stream()
-                .map(BoardElementResponse::from)
+                .map(BoardElementResponse::of)
                 .toList();
         return new BoardListResponse(contents);
+    }
+
+    public BoardElementResponse findBoard(Long id) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
+        return BoardElementResponse.of(board);
     }
 }
