@@ -5,23 +5,18 @@ import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
-import com.fretboard.fretboard.image.infrastructure.AwsS3Provider;
+import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.repository.MemberRepository;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.request.EditPostRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
-import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
 import com.fretboard.fretboard.post.dto.request.NewPostRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,16 +28,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostService {
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
-    private final AwsS3Provider awsS3Provider;
+    private final ImageService imageService;
     private final BoardRepository boardRepository;
 
     @Transactional
     public Long addPost(final NewPostRequest request, final MemberAuth memberAuth) {
         Post post = request.toPost(getMember(memberAuth), getBoard(request.boardId()));
-        post.setContent(convertTempImageUrlsToPermanent(post.getContent()));
+
+        String convertedContent = imageService.convertTempImageUrlsToPermanent(post.getContent());
+        post.setContent(convertedContent);
 
         Post savedPost = postRepository.save(post);
-        //boardService.savePostBoard(savedPost, request.boardId());
         return savedPost.getId();
     }
 
@@ -52,8 +48,12 @@ public class PostService {
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
         validateIsAuthor(post.getMember(), getMember(memberAuth));
+
+        imageService.cleanUpRemovedImages(post.getContent(), request.content());
+        String convertedContent = imageService.convertTempImageUrlsToPermanent(request.content());
+
         post.setTitle(request.title());
-        post.setContent(convertTempImageUrlsToPermanent(request.content()));
+        post.setContent(convertedContent);
     }
 
     @Transactional
@@ -62,6 +62,8 @@ public class PostService {
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
         validateIsAuthor(post.getMember(), getMember(memberAuth));
+        imageService.deleteImage(post.getContent());
+
         postRepository.delete(post);
     }
 
@@ -84,19 +86,6 @@ public class PostService {
     private Board getBoard(final Long boardId) {
         return boardRepository.findById(boardId)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
-    }
-
-    private String convertTempImageUrlsToPermanent(String htmlContent) {
-        Document doc = Jsoup.parse(htmlContent);
-        Elements images = doc.select("img");
-
-        for (Element img : images) {
-            String imgUrl = img.attr("src");
-            String permanentUrl = awsS3Provider.copyImageToPermanentStorage(imgUrl);
-            img.attr("src", permanentUrl);
-        }
-
-        return doc.body().html();
     }
 
     private void validateIsAuthor(Member author, Member loginMember) {
