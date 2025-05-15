@@ -12,6 +12,7 @@ public record PostDetailResponse(
         String content,
         String author,
         LocalDateTime createdAt,
+        Long viewCount,
         CommentResponse commentResponse
 ) {
     public static PostDetailResponse of(Post post) {
@@ -21,6 +22,7 @@ public record PostDetailResponse(
                 .content(post.getContent())
                 .author(post.getMember().getNickname())
                 .createdAt(post.getCreatedAt())
+                .viewCount(post.getViewCount())
                 .commentResponse(CommentResponse.createByComments(post.getComments()))
                 .build();
     }

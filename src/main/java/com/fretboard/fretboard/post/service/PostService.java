@@ -70,9 +70,11 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    public PostDetailResponse findPost(final Long id) {
+    @Transactional
+    public PostDetailResponse getPostDetail(final Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
+        post.setViewCount(post.getViewCount() + 1);
         return PostDetailResponse.of(post);
     }
 

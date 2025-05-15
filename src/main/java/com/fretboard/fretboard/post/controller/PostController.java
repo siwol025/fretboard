@@ -47,7 +47,7 @@ public class PostController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping(params = {"boardId","keyword"})
+    @GetMapping(params = {"boardId", "keyword"})
     public ResponseEntity<PostListResponse> searchPosts(@RequestParam Long boardId,
                                                                  @RequestParam String keyword,
                                                                  @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -57,7 +57,7 @@ public class PostController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long id) {
-        return ResponseEntity.ok().body(postService.findPost(id));
+        return ResponseEntity.ok().body(postService.getPostDetail(id));
     }
 
     @PutMapping("/{id}")

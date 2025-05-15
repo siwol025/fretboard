@@ -52,6 +52,9 @@ public class Post extends BaseEntity {
     @BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
 
+    @Column(nullable = false)
+    private Long viewCount = 0L;
+
     @Builder
     public Post(String title, String content, Member member, Board board) {
         this.title = title;
