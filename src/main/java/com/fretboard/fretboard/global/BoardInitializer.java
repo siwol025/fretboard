@@ -70,7 +70,7 @@ public class BoardInitializer implements CommandLineRunner {
                             .role(Role.USER)
                             .build());
         }
-        Member member = memberRepository.findById(1L)
+        Member member = memberRepository.findById(3L)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.MEMBER_NOT_FOUND));
         if (postRepository. count() == 0) {
             for (int i = 1; i <= 1000; i++) {

@@ -39,4 +39,5 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     )
     Page<Post> searchByBoardIdAndKeyword(Long boardId, String keyword, Pageable pageable);
 
+    Page<Post> findByMemberId(Long memberId, Pageable pageable);
 }

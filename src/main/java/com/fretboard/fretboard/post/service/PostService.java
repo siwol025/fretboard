@@ -78,6 +78,11 @@ public class PostService {
         return PostDetailResponse.of(post);
     }
 
+    public PostListResponse findMyPosts(final MemberAuth memberAuth, Pageable pageable) {
+        Page<Post> posts = postRepository.findByMemberId(memberAuth.memberId(), pageable);
+        return PostListResponse.of(posts);
+    }
+
     public PostListResponse findPostsByBoardId(final Long boardId, Pageable pageable) {
         Page<Post> posts = postRepository.findByBoardId(boardId,pageable);
         return PostListResponse.of(posts);

@@ -11,6 +11,8 @@ public record PostSummaryResponse(
         String author,
         LocalDateTime createdAt,
         Long viewCount,
+        Long boardId,
+        String boardTitle,
         int commentCount
 ) {
     public static PostSummaryResponse of(Post post) {
@@ -21,6 +23,8 @@ public record PostSummaryResponse(
                 .createdAt(post.getCreatedAt())
                 .viewCount(post.getViewCount())
                 .commentCount(post.getComments().size())
+                .boardId(post.getBoard().getId())
+                .boardTitle(post.getBoard().getTitle())
                 .build();
     }
 }

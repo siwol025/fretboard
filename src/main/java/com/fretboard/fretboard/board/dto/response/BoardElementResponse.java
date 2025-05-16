@@ -7,13 +7,15 @@ import lombok.Builder;
 public record BoardElementResponse(
         Long id,
         String title,
-        String description
+        String description,
+        String slug
 ) {
     public static BoardElementResponse of(Board board) {
         return BoardElementResponse.builder()
                 .id(board.getId())
                 .title(board.getTitle())
                 .description(board.getDescription())
+                .slug(board.getSlug())
                 .build();
     }
 }

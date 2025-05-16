@@ -4,7 +4,6 @@ import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.post.dto.request.EditPostRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
-import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
 import com.fretboard.fretboard.post.dto.request.NewPostRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
