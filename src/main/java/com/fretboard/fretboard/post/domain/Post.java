@@ -49,7 +49,7 @@ public class Post extends BaseEntity {
     private Board board;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
-    @BatchSize(size = 100)
+    //@BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
 
     @Column(nullable = false)

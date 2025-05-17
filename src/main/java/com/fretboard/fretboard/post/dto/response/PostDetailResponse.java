@@ -10,6 +10,7 @@ public record PostDetailResponse(
         Long id,
         String title,
         String content,
+        Long authorId,
         String author,
         LocalDateTime createdAt,
         Long viewCount,
@@ -22,6 +23,7 @@ public record PostDetailResponse(
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
+                .authorId(post.getMember().getId())
                 .author(post.getMember().getNickname())
                 .createdAt(post.getCreatedAt())
                 .viewCount(post.getViewCount())

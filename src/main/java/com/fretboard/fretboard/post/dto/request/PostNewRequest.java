@@ -6,7 +6,7 @@ import com.fretboard.fretboard.post.domain.Post;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record NewPostRequest(
+public record PostNewRequest(
         @NotNull
         Long boardId,
 

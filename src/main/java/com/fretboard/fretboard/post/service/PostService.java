@@ -9,9 +9,9 @@ import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.repository.MemberRepository;
 import com.fretboard.fretboard.post.domain.Post;
-import com.fretboard.fretboard.post.dto.request.EditPostRequest;
+import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
-import com.fretboard.fretboard.post.dto.request.NewPostRequest;
+import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
@@ -32,7 +32,7 @@ public class PostService {
     private final BoardRepository boardRepository;
 
     @Transactional
-    public Long addPost(final NewPostRequest request, final MemberAuth memberAuth) {
+    public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
         Member loginMember = getMember(memberAuth);
         Board board = getBoard(request.boardId());
         board.validateWritable(loginMember);
@@ -46,7 +46,7 @@ public class PostService {
     }
 
     @Transactional
-    public void updatePost(final Long id, final EditPostRequest request, final MemberAuth memberAuth) {
+    public void updatePost(final Long id, final PostEditRequest request, final MemberAuth memberAuth) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 

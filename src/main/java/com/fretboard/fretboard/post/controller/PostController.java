@@ -2,9 +2,9 @@ package com.fretboard.fretboard.post.controller;
 
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
-import com.fretboard.fretboard.post.dto.request.EditPostRequest;
+import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
-import com.fretboard.fretboard.post.dto.request.NewPostRequest;
+import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.service.PostService;
@@ -33,7 +33,7 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    public ResponseEntity<Void> createPost(@Valid @RequestBody NewPostRequest request,
+    public ResponseEntity<Void> createPost(@Valid @RequestBody PostNewRequest request,
                                         @LoginMember MemberAuth memberAuth) {
         Long postId = postService.addPost(request, memberAuth);
         return ResponseEntity.created(URI.create("/posts/" + postId)).build();
@@ -61,7 +61,7 @@ public class PostController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> updatePostDetails(@PathVariable Long id,
-                                           @Valid @RequestBody EditPostRequest postRequest,
+                                           @Valid @RequestBody PostEditRequest postRequest,
                                            @LoginMember MemberAuth memberAuth) {
         postService.updatePost(id, postRequest, memberAuth);
         return ResponseEntity.noContent().build();

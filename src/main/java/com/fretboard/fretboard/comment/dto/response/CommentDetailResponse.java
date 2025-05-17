@@ -8,6 +8,7 @@ import lombok.Builder;
 public record CommentDetailResponse(
         Long id,
         String content,
+        Long authorId,
         String author,
         LocalDateTime createdAt
 ) {
@@ -15,6 +16,7 @@ public record CommentDetailResponse(
         return CommentDetailResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
+                .authorId(comment.getMember().getId())
                 .author(comment.getMember().getNickname())
                 .createdAt(comment.getCreatedAt())
                 .build();

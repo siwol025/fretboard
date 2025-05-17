@@ -36,12 +36,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.whiteList = List.of(
                 new HttpRequestInfo(HttpMethod.POST, "/api/login"),
                 new HttpRequestInfo(HttpMethod.POST, "/api/login/**"),
-                new HttpRequestInfo(HttpMethod.POST, "/api/members/**"),
+                new HttpRequestInfo(HttpMethod.POST, "/api/members/signup"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/posts"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/posts/**"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/boards"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/boards/**"),
-                new HttpRequestInfo(HttpMethod.POST, "/api/upload")
+                new HttpRequestInfo(HttpMethod.POST, "/api/upload"),
+                new HttpRequestInfo(HttpMethod.GET, "/actuator/prometheus")
         );
     }
 

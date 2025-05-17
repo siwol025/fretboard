@@ -2,6 +2,9 @@ package com.fretboard.fretboard.member.controller;
 
 import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
+import com.fretboard.fretboard.member.dto.MemberEditRequest;
+import com.fretboard.fretboard.member.dto.MemberEditResponse;
+import com.fretboard.fretboard.member.dto.PasswordEditRequest;
 import com.fretboard.fretboard.member.dto.SignupRequest;
 import com.fretboard.fretboard.member.service.MemberService;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
@@ -37,5 +40,19 @@ public class MemberController {
 
         PostListResponse response = postService.findMyPosts(memberAuth, pageable);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/password-changes")
+    public ResponseEntity<Void> changePassword(@LoginMember MemberAuth memberAuth,
+                                               @RequestBody PasswordEditRequest request) {
+        memberService.updatePassword(memberAuth, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/edit-profile")
+    public ResponseEntity<MemberEditResponse> editMemberInfo(@LoginMember MemberAuth memberAuth,
+                                                             @RequestBody MemberEditRequest request) {
+        MemberEditResponse memberEditResponse = memberService.updateMemberInfo(memberAuth, request);
+        return ResponseEntity.ok().body(memberEditResponse);
     }
 }

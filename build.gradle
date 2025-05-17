@@ -40,6 +40,9 @@ dependencies {
 	implementation platform('software.amazon.awssdk:bom:2.25.4')
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'org.jsoup:jsoup:1.17.2'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
 
 }
 
