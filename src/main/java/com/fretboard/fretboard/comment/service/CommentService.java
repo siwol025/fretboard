@@ -33,7 +33,7 @@ public class CommentService {
         Comment comment = Comment.parent(commentRequest.content(), member, post);
         post.addComment(comment);
         commentRepository.save(comment);
-
+        postRepository.increaseCommentCount(postId);
         return comment.getId();
     }
 
@@ -57,6 +57,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
         validateIsAuthor(comment.getMember(), getMember(memberAuth));
+        postRepository.decreaseCommentCount(comment.getPost().getId());
         commentRepository.delete(comment);
     }
 

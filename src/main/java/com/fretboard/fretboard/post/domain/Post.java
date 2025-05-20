@@ -49,18 +49,23 @@ public class Post extends BaseEntity {
     private Board board;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
-    //@BatchSize(size = 100)
+    @BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
+
+    @Column(nullable = false)
+    private int commentCount = 0;
 
     @Column(nullable = false)
     private Long viewCount = 0L;
 
     @Builder
-    public Post(String title, String content, Member member, Board board) {
+    public Post(String title, String content, Member member, Board board, int commentCount, Long viewCount) {
         this.title = title;
         this.content = content;
         this.member = member;
         this.board = board;
+        this.commentCount = commentCount;
+        this.viewCount = viewCount;
     }
 
     public void addComment(final Comment comment) {

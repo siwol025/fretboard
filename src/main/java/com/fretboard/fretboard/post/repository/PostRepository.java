@@ -4,15 +4,23 @@ import com.fretboard.fretboard.post.domain.Post;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    //@EntityGraph(attributePaths = {"comments"})
+    @Query(
+            value = """
+                SELECT p FROM Post p
+                WHERE p.board.id = :boardId
+                ORDER BY p.createdAt DESC
+                """,
+            countQuery = """
+                SELECT COUNT(p) FROM Post p
+                WHERE p.board.id = :boardId
+                """)
     Page<Post> findByBoardId(Long boardId, Pageable pageable);
 
     @Query(
@@ -40,4 +48,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> searchByBoardIdAndKeyword(Long boardId, String keyword, Pageable pageable);
 
     Page<Post> findByMemberId(Long memberId, Pageable pageable);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = "UPDATE post SET comment_count = comment_count + 1 WHERE id = :postId", nativeQuery = true)
+    void increaseCommentCount(Long postId);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = "UPDATE post SET comment_count = comment_count - 1 WHERE id = :postId", nativeQuery = true)
+    void decreaseCommentCount(Long postId);
 }
