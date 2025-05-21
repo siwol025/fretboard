@@ -3,6 +3,7 @@ package com.fretboard.fretboard.post.service;
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
+import com.fretboard.fretboard.global.common.CacheKey;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
 import com.fretboard.fretboard.image.service.ImageService;
@@ -16,9 +17,16 @@ import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +38,7 @@ public class PostService {
     private final MemberRepository memberRepository;
     private final ImageService imageService;
     private final BoardRepository boardRepository;
+    private final ViewCountService viewCountService;
 
     @Transactional
     public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
@@ -45,6 +54,7 @@ public class PostService {
         return savedPost.getId();
     }
 
+    @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY)
     @Transactional
     public void updatePost(final Long id, final PostEditRequest request, final MemberAuth memberAuth) {
         Post post = postRepository.findById(id)
@@ -59,6 +69,7 @@ public class PostService {
         post.setContent(convertedContent);
     }
 
+    @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY)
     @Transactional
     public void deletePost(final Long id, final MemberAuth memberAuth) {
         Post post = postRepository.findById(id)
@@ -68,14 +79,21 @@ public class PostService {
         imageService.deleteImage(post.getContent());
 
         postRepository.delete(post);
+        viewCountService.deleteViewCount(id);
     }
 
     @Transactional
     public PostDetailResponse getPostDetail(final Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
-        post.setViewCount(post.getViewCount() + 1);
-        return PostDetailResponse.of(post);
+
+        if (!viewCountService.hasViewCount(id)) {
+            viewCountService.setInitialViewCount(id, post.getViewCount());
+        }
+
+        Long updatedViewCount = viewCountService.increaseViewCount(id);
+
+        return PostDetailResponse.of(post, updatedViewCount);
     }
 
     public PostListResponse findMyPosts(final MemberAuth memberAuth, Pageable pageable) {
@@ -109,8 +127,30 @@ public class PostService {
         }
     }
 
-    public List<RecentPostsPerBoardResponse> findRecentPostsPerBoard() {
-        List<Post> recentPostsPerBoards = postRepository.findRecentPostsPerBoards();
-        return RecentPostsPerBoardResponse.of(recentPostsPerBoards);
+    @Cacheable(
+            cacheNames = CacheKey.RECENT_POSTS,
+            key = CacheKey.RECENT_POSTS_KEY,
+            cacheManager = "postCacheManager"
+    )
+    public List<RecentPostsPerBoardResponse> getRecentPosts() {
+        List<Post> recentPosts = postRepository.findRecentPostsPerBoards();
+        return RecentPostsPerBoardResponse.of(recentPosts);
+    }
+
+    @Scheduled(fixedRate = 300000)
+    @Transactional
+    public void syncViewCountsToDatabase() {
+        Map<Object, Object> counts = viewCountService.getAllViewCounts();
+
+        for (Map.Entry<Object, Object> entry : counts.entrySet()) {
+            Long postId = Long.parseLong(entry.getKey().toString());
+            Long viewCount = Long.parseLong(entry.getValue().toString());
+            if (!postRepository.existsById(postId)) {
+                continue;
+            }
+            postRepository.updateViewCount(postId, viewCount);
+        }
+
+        viewCountService.clearAllViewCounts();
     }
 }

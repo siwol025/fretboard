@@ -5,14 +5,26 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
-@Builder
-public record RecentPostsPerBoardResponse(
-        Long boardId,
-        String boardTitle,
-        String boardSlug,
-        List<PostSummaryResponse> posts
-) {
+@Getter
+@Setter
+public class RecentPostsPerBoardResponse {
+    Long boardId;
+    String boardTitle;
+    String boardSlug;
+    List<PostSummaryResponse> posts;
+
+    @Builder
+    public RecentPostsPerBoardResponse(Long boardId, String boardTitle, String boardSlug,
+                                       List<PostSummaryResponse> posts) {
+        this.boardId = boardId;
+        this.boardTitle = boardTitle;
+        this.boardSlug = boardSlug;
+        this.posts = posts;
+    }
+
     public static List<RecentPostsPerBoardResponse> of(List<Post> posts) {
         return posts.stream()
                 .collect(Collectors.groupingBy(
@@ -25,16 +37,12 @@ public record RecentPostsPerBoardResponse(
                 ))
                 .entrySet().stream()
                 .map(entry -> RecentPostsPerBoardResponse.builder()
-                        .boardId(entry.getKey().boardId())
-                        .boardTitle(entry.getKey().boardTitle())
-                        .boardSlug(entry.getKey().boardSlug())
+                        .boardId(entry.getKey().getBoardId())
+                        .boardTitle(entry.getKey().getBoardTitle())
+                        .boardSlug(entry.getKey().getBoardSlug())
                         .posts(entry.getValue())
                         .build()
                 )
                 .toList();
     }
-
-    public record BoardKey(Long boardId, String boardTitle, String boardSlug) { }
 }
-
-

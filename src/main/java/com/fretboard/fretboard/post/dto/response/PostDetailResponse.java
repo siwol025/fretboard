@@ -18,7 +18,7 @@ public record PostDetailResponse(
         String boardTitle,
         CommentResponse commentResponse
 ) {
-    public static PostDetailResponse of(Post post) {
+    public static PostDetailResponse of(Post post, Long viewCount) {
         return PostDetailResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -26,7 +26,7 @@ public record PostDetailResponse(
                 .authorId(post.getMember().getId())
                 .author(post.getMember().getNickname())
                 .createdAt(post.getCreatedAt())
-                .viewCount(post.getViewCount())
+                .viewCount(viewCount)
                 .commentResponse(CommentResponse.createByComments(post.getComments()))
                 .boardId(post.getBoard().getId())
                 .boardTitle(post.getBoard().getTitle())

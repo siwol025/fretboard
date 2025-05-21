@@ -65,7 +65,7 @@ public class Post extends BaseEntity {
         this.member = member;
         this.board = board;
         this.commentCount = commentCount;
-        this.viewCount = viewCount;
+        this.viewCount = (viewCount != null) ? viewCount : 0L;
     }
 
     public void addComment(final Comment comment) {

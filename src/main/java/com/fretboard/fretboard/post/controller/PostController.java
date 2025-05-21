@@ -76,7 +76,7 @@ public class PostController {
 
     @GetMapping("/recent-posts")
     public ResponseEntity<List<RecentPostsPerBoardResponse>> getRecentPostsPerBoard() {
-        List<RecentPostsPerBoardResponse> response = postService.findRecentPostsPerBoard();
+        List<RecentPostsPerBoardResponse> response = postService.getRecentPosts();
         return ResponseEntity.ok().body(response);
     }
 }
