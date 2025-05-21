@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  app:
+    image: fretboard-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fretboard-app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: fretboard-redis
+    ports:
+      - "6379:6379"
+    restart: always

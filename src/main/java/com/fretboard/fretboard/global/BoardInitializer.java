@@ -65,47 +65,47 @@ public class BoardInitializer implements CommandLineRunner {
                         .boardType(BoardType.WRITABLE)
                         .build());
         }
-        Board board = boardRepository.findById(3L)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
-
-        if (memberRepository.count() ==0) {
-            memberRepository.save(Member.builder()
-                            .nickname("김개발")
-                            .password("xcvoqbrosdvkzxcvnaelwelfajxzcvsdjo")
-                            .username("xcvoqbrosdvkzxcvnaelwelfajxzcvsdjo")
-                            .role(Role.USER)
-                            .build());
-            memberRepository.save(Member.builder()
-                            .nickname("이디자인")
-                            .password("zxbnoaseojrbjkgaelkzsdlkewkbfavsdlf")
-                            .username("zxbnoaseojrbjkgaelkzsdlkewkbfavsdlf")
-                            .role(Role.USER)
-                            .build());
-            memberRepository.save(Member.builder()
-                            .nickname("박프론트")
-                            .password("asdlflnbzxpwelnkwteqpzxcbovdsalnkqwelkhkhls")
-                            .username("asdlflnbzxpwelnkwteqpzxcbovdsalnkqwelkhkhls")
-                            .role(Role.USER)
-                            .build());
-        }
-        Member member = memberRepository.findById(3L)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.MEMBER_NOT_FOUND));
-        if (postRepository. count() == 0) {
-            for (int i = 1; i <= 1000; i++) {
-                Post post = Post.builder()
-                        .title("테스트 게시글 " + i)
-                        .content("이것은 테스트 게시글 내용입니다. 번호: " + i)
-                        .member(member)
-                        .build();
-                post.setBoard(board);
-                Post savedPost = postRepository.save(post);
-                for (int j = 1; j <= 100; j++) {
-                    Comment comment = Comment.parent("테스트 댓글", member, savedPost);
-                    savedPost.addComment(comment);
-                    commentRepository.save(comment);
-                }
-
-            }
-        }
+//        Board board = boardRepository.findById(3L)
+//                .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
+//
+//        if (memberRepository.count() ==0) {
+//            memberRepository.save(Member.builder()
+//                            .nickname("김개발")
+//                            .password("xcvoqbrosdvkzxcvnaelwelfajxzcvsdjo")
+//                            .username("xcvoqbrosdvkzxcvnaelwelfajxzcvsdjo")
+//                            .role(Role.USER)
+//                            .build());
+//            memberRepository.save(Member.builder()
+//                            .nickname("이디자인")
+//                            .password("zxbnoaseojrbjkgaelkzsdlkewkbfavsdlf")
+//                            .username("zxbnoaseojrbjkgaelkzsdlkewkbfavsdlf")
+//                            .role(Role.USER)
+//                            .build());
+//            memberRepository.save(Member.builder()
+//                            .nickname("박프론트")
+//                            .password("asdlflnbzxpwelnkwteqpzxcbovdsalnkqwelkhkhls")
+//                            .username("asdlflnbzxpwelnkwteqpzxcbovdsalnkqwelkhkhls")
+//                            .role(Role.USER)
+//                            .build());
+//        }
+//        Member member = memberRepository.findById(3L)
+//                .orElseThrow(() -> new FretBoardException(ExceptionType.MEMBER_NOT_FOUND));
+//        if (postRepository. count() == 0) {
+//            for (int i = 1; i <= 1000; i++) {
+//                Post post = Post.builder()
+//                        .title("테스트 게시글 " + i)
+//                        .content("이것은 테스트 게시글 내용입니다. 번호: " + i)
+//                        .member(member)
+//                        .build();
+//                post.setBoard(board);
+//                Post savedPost = postRepository.save(post);
+//                for (int j = 1; j <= 100; j++) {
+//                    Comment comment = Comment.parent("테스트 댓글", member, savedPost);
+//                    savedPost.addComment(comment);
+//                    commentRepository.save(comment);
+//                }
+//
+//            }
+//        }
     }
 }
