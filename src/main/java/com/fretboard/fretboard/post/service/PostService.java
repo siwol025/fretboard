@@ -2,6 +2,8 @@ package com.fretboard.fretboard.post.service;
 
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.repository.BoardRepository;
+import com.fretboard.fretboard.comment.dto.PostCommentCountDto;
+import com.fretboard.fretboard.comment.repository.CommentRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.common.CacheKey;
 import com.fretboard.fretboard.global.exception.ExceptionType;
@@ -13,19 +15,21 @@ import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
-import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
+import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.dto.PostWithCommentCountDto;
+import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +43,7 @@ public class PostService {
     private final ImageService imageService;
     private final BoardRepository boardRepository;
     private final ViewCountService viewCountService;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
@@ -96,19 +101,42 @@ public class PostService {
         return PostDetailResponse.of(post, updatedViewCount);
     }
 
-    public PostListResponse findMyPosts(final MemberAuth memberAuth, Pageable pageable) {
+    public MyPostListResponse findMyPosts(final MemberAuth memberAuth, Pageable pageable) {
         Page<Post> posts = postRepository.findByMemberId(memberAuth.memberId(), pageable);
-        return PostListResponse.of(posts);
+        return MyPostListResponse.of(posts);
     }
 
-    public PostListResponse findPostsByBoardId(final Long boardId, Pageable pageable) {
-        Page<Post> posts = postRepository.findByBoardId(boardId,pageable);
-        return PostListResponse.of(posts);
+    public PostListResponse getPostsByBoardId(final Long boardId, Pageable pageable) {
+        Page<PostSummaryDto> posts = postRepository.findByBoardIdV4(boardId, pageable);
+
+        List<Long> postIds = posts.getContent().stream()
+                .map(PostSummaryDto::id)
+                .toList();
+
+        List<PostCommentCountDto> counts = commentRepository.countCommentsByPostIds(postIds);
+        Map<Long, Long> commentCountMap = counts.stream()
+                .collect(Collectors.toMap(PostCommentCountDto::postId, PostCommentCountDto::commentCount));
+
+        Page<PostWithCommentCountDto> resultPage = new PageImpl<>(
+                posts.getContent().stream()
+                        .map(post -> new PostWithCommentCountDto(
+                                post.id(),
+                                post.title(),
+                                post.author(),
+                                post.createdAt(),
+                                post.viewCount(),
+                                commentCountMap.getOrDefault(post.id(), 0L)
+                        )).toList()
+                ,pageable,
+                posts.getTotalElements()
+        );
+
+        return PostListResponse.of(resultPage);
     }
 
-    public PostListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
+    public MyPostListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
         Page<Post> posts = postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable);
-        return PostListResponse.of(posts);
+        return MyPostListResponse.of(posts);
     }
 
     private Member getMember(final MemberAuth memberAuth) {

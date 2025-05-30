@@ -22,7 +22,7 @@ public record PostSummaryResponse(
                 .author(post.getMember().getNickname())
                 .createdAt(post.getCreatedAt())
                 .viewCount(post.getViewCount())
-                .commentCount(post.getCommentCount())
+                .commentCount(post.getComments().size())
                 .boardId(post.getBoard().getId())
                 .boardTitle(post.getBoard().getTitle())
                 .build();

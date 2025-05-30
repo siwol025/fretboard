@@ -1,6 +1,7 @@
 package com.fretboard.fretboard.post.repository;
 
 import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,17 +13,20 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    @Query(
-            value = """
-                SELECT p FROM Post p
-                WHERE p.board.id = :boardId
-                ORDER BY p.createdAt DESC
-                """,
+    @Query(value = """
+                select new com.fretboard.fretboard.post.dto.PostSummaryDto(
+                    p.id, p.title, m.nickname, p.createdAt, p.viewCount
+                )
+                from Post p
+                join p.member m
+                where p.board.id = :boardId
+            """,
             countQuery = """
-                SELECT COUNT(p) FROM Post p
-                WHERE p.board.id = :boardId
-                """)
-    Page<Post> findByBoardId(Long boardId, Pageable pageable);
+                select count(p)
+                from Post p
+                where p.board.id = :boardId
+            """)
+    Page<PostSummaryDto> findByBoardIdV4(Long boardId, Pageable pageable);
 
     @Query(
             value = """
@@ -49,14 +53,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> searchByBoardIdAndKeyword(Long boardId, String keyword, Pageable pageable);
 
     Page<Post> findByMemberId(Long memberId, Pageable pageable);
-
-    @Modifying(clearAutomatically = true)
-    @Query(value = "UPDATE post SET comment_count = comment_count + 1 WHERE id = :postId", nativeQuery = true)
-    void increaseCommentCount(Long postId);
-
-    @Modifying(clearAutomatically = true)
-    @Query(value = "UPDATE post SET comment_count = comment_count - 1 WHERE id = :postId", nativeQuery = true)
-    void decreaseCommentCount(Long postId);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Post p SET p.viewCount = :viewCount WHERE p.id = :postId")

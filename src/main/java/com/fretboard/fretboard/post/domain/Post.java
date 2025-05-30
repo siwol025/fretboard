@@ -53,18 +53,14 @@ public class Post extends BaseEntity {
     private List<Comment> comments = new ArrayList<>();
 
     @Column(nullable = false)
-    private int commentCount = 0;
-
-    @Column(nullable = false)
     private Long viewCount = 0L;
 
     @Builder
-    public Post(String title, String content, Member member, Board board, int commentCount, Long viewCount) {
+    public Post(String title, String content, Member member, Board board, Long viewCount) {
         this.title = title;
         this.content = content;
         this.member = member;
         this.board = board;
-        this.commentCount = commentCount;
         this.viewCount = (viewCount != null) ? viewCount : 0L;
     }
 

@@ -7,7 +7,7 @@ import com.fretboard.fretboard.member.dto.MemberEditResponse;
 import com.fretboard.fretboard.member.dto.PasswordEditRequest;
 import com.fretboard.fretboard.member.dto.SignupRequest;
 import com.fretboard.fretboard.member.service.MemberService;
-import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +35,10 @@ public class MemberController {
     }
 
     @GetMapping("/mypage/posts")
-    public ResponseEntity<PostListResponse> getMyPosts(@LoginMember MemberAuth memberAuth,
-                                                       @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<MyPostListResponse> getMyPosts(@LoginMember MemberAuth memberAuth,
+                                                         @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        PostListResponse response = postService.findMyPosts(memberAuth, pageable);
+        MyPostListResponse response = postService.findMyPosts(memberAuth, pageable);
         return ResponseEntity.ok(response);
     }
 
