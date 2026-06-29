@@ -177,9 +177,6 @@ public class PostService {
         for (Map.Entry<Object, Object> entry : counts.entrySet()) {
             Long postId = Long.parseLong(entry.getKey().toString());
             Long viewCount = Long.parseLong(entry.getValue().toString());
-            if (!postRepository.existsById(postId)) {
-                continue;
-            }
             postRepository.updateViewCount(postId, viewCount);
         }
 
