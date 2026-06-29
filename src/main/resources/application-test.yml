@@ -13,11 +13,28 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+cloud:
+  aws:
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: test-bucket
+      image-base-uri: https://test-bucket.s3.amazonaws.com/
+      temporary-storage-path: temp/
+      image-storage-path: images/
 
 security:
   jwt:
