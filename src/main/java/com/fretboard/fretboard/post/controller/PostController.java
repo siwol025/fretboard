@@ -7,6 +7,7 @@ import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
@@ -78,6 +79,12 @@ public class PostController {
     @GetMapping("/recent-posts")
     public ResponseEntity<List<RecentPostsPerBoardResponse>> getRecentPostsPerBoard() {
         List<RecentPostsPerBoardResponse> response = postService.getRecentPosts();
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/best")
+    public ResponseEntity<List<PostSummaryDto>> getBestPosts() {
+        List<PostSummaryDto> response = postService.getMostPosts();
         return ResponseEntity.ok().body(response);
     }
 }

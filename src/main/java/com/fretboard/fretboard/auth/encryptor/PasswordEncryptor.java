@@ -1,25 +1,18 @@
 package com.fretboard.fretboard.auth.encryptor;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PasswordEncryptor {
 
-    public static final int HEXADECIMAL = 16;
+    private final BCryptPasswordEncoder bcryptEncoder = new BCryptPasswordEncoder();
 
-    public String encrypt(String password) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-512");
+    public String encode(String raw) {
+        return bcryptEncoder.encode(raw);
+    }
 
-            byte[] message = md.digest(password.getBytes());
-            BigInteger number = new BigInteger(1, message);
-
-            return number.toString(HEXADECIMAL);
-        } catch (NoSuchAlgorithmException exception) {
-            throw new RuntimeException();
-        }
+    public boolean matches(String rawPassword, String encodedPassword) {
+        return bcryptEncoder.matches(rawPassword, encodedPassword);
     }
 }

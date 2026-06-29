@@ -20,13 +20,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 from Post p
                 join p.member m
                 where p.board.id = :boardId
-            """,
-            countQuery = """
-                select count(p)
-                from Post p
-                where p.board.id = :boardId
             """)
-    Page<PostSummaryDto> findByBoardIdV4(Long boardId, Pageable pageable);
+    Page<PostSummaryDto> findPostSummaryByBoardId(Long boardId, Pageable pageable);
 
     @Query(
             value = """
@@ -53,6 +48,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> searchByBoardIdAndKeyword(Long boardId, String keyword, Pageable pageable);
 
     Page<Post> findByMemberId(Long memberId, Pageable pageable);
+
+    @Query("""
+    select new com.fretboard.fretboard.post.dto.PostSummaryDto(
+                    p.id, p.title, m.nickname, p.createdAt, p.viewCount
+                )
+        FROM Post p
+        join p.member m
+        WHERE p.id IN :postIds
+    """)
+    List<PostSummaryDto> findByPostIds(List<Long> postIds);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Post p SET p.viewCount = :viewCount WHERE p.id = :postId")

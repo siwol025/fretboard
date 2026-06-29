@@ -9,10 +9,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import java.util.List;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +21,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_comment_post_id", columnList = "post_id"),
+        @Index(name = "idx_comment_member_id", columnList = "member_id")
+})
 @Getter
 @Setter
 @AllArgsConstructor
@@ -44,9 +48,6 @@ public class Comment extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Comment parent;
-
-    @OneToMany(mappedBy = "parent")
-    private List<Comment> children;
 
     @Builder
     public Comment(String content, Post post, Member member, Comment parent) {

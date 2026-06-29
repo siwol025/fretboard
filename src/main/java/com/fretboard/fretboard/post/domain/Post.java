@@ -11,9 +11,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -22,9 +24,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.BatchSize;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_post_board_id", columnList = "board_id"),
+        @Index(name = "idx_post_member_id", columnList = "member_id"),
+        @Index(name = "idx_post_created_at", columnList = "created_at")
+})
 @Getter
 @Setter
 @AllArgsConstructor
@@ -49,7 +55,6 @@ public class Post extends BaseEntity {
     private Board board;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
-    @BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
 
     @Column(nullable = false)

@@ -26,6 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
     private final JwtTokenProvider tokenProvider;
     private final List<HttpRequestInfo> whiteList;
+    private final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     public JwtAuthFilter(
             ObjectMapper objectMapper,
@@ -41,17 +42,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 new HttpRequestInfo(HttpMethod.GET, "/api/posts/**"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/boards"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/boards/**"),
-                new HttpRequestInfo(HttpMethod.POST, "/api/upload"),
                 new HttpRequestInfo(HttpMethod.GET, "/actuator/prometheus")
         );
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws IOException {
+            throws IOException, ServletException {
         String token = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (isTokenBlank(token)) {
-            sendUnauthorizedResponse(response, "로그인을 해주세요.");
+            sendUnauthorizedResponse(request, response, "로그인을 해주세요.");
             return;
         }
         token = token.split("Bearer|bearer")[1];
@@ -59,19 +59,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String memberId = tokenProvider.decodeAccessToken(token);
             request.setAttribute(MEMBER_ID_ATTRIBUTE, memberId);
             filterChain.doFilter(request, response);
+        } catch (ServletException e) {
+            throw e;
         } catch (Exception e) {
-            sendUnauthorizedResponse(response, e.getMessage());
+            sendUnauthorizedResponse(request, response, e.getMessage());
         }
     }
 
-    private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
+    private void sendUnauthorizedResponse(HttpServletRequest request, HttpServletResponse response, String message) throws IOException {
         log.warn("UNAUTHORIZED_EXCEPTION :: message = {}", message);
         FretBoardErrorResponse errorResponse = new FretBoardErrorResponse(HttpStatus.UNAUTHORIZED, "로그인해주세요.");
+
+        String origin = request.getHeader("Origin");
+        String allowOrigin = (origin != null) ? origin : "*";
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+        response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, allowOrigin);
         response.getWriter()
                 .write(objectMapper.writeValueAsString(errorResponse));
     }
@@ -85,7 +90,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private boolean isInWhiteList(String method, String url) {
-        AntPathMatcher antPathMatcher = new AntPathMatcher();
         return whiteList.stream()
                 .anyMatch(white -> white.method().matches(method) && antPathMatcher.match(white.urlPattern(), url));
     }

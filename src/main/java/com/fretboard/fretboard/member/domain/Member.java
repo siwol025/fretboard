@@ -1,5 +1,6 @@
 package com.fretboard.fretboard.member.domain;
 
+import com.fretboard.fretboard.auth.encryptor.PasswordEncryptor;
 import com.fretboard.fretboard.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,8 +46,8 @@ public class Member extends BaseEntity {
         this(null, username, password, nickname, role);
     }
 
-    public boolean matchPassword(String password) {
-        return this.password.equals(password);
+    public boolean matchPassword(String rawPassword, PasswordEncryptor encryptor) {
+        return encryptor.matches(rawPassword, this.password);
     }
 
     public boolean isAdmin() {

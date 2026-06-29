@@ -24,7 +24,7 @@ public class MemberService {
     @Transactional
     public void signup(final SignupRequest signupRequest) {
         validate(signupRequest);
-        String encryptedPassword = passwordEncryptor.encrypt(signupRequest.password());
+        String encryptedPassword = passwordEncryptor.encode(signupRequest.password());
         Member member = signupRequest.toMember(encryptedPassword);
         memberRepository.save(member);
     }
@@ -32,10 +32,9 @@ public class MemberService {
     @Transactional
     public void updatePassword(final MemberAuth memberAuth, final PasswordEditRequest request) {
         Member member = getMember(memberAuth.memberId());
-        String encryptedCurrentPassword = passwordEncryptor.encrypt(request.currentPassword());
-        validateCurrentPassword(member, encryptedCurrentPassword);
+        validateCurrentPassword(member, request.currentPassword());
 
-        String encryptedNewPassword = passwordEncryptor.encrypt(request.newPassword());
+        String encryptedNewPassword = passwordEncryptor.encode(request.newPassword());
         member.setPassword(encryptedNewPassword);
     }
 
@@ -72,8 +71,8 @@ public class MemberService {
                 .orElseThrow(() -> new FretBoardException(ExceptionType.MEMBER_NOT_FOUND));
     }
 
-    private void validateCurrentPassword(final Member member, String currentPassword) {
-        if (!member.matchPassword(currentPassword)) {
+    private void validateCurrentPassword(final Member member, String rawPassword) {
+        if (!member.matchPassword(rawPassword, passwordEncryptor)) {
             throw new FretBoardException(ExceptionType.INVALID_CURRENT_PASSWORD);
         }
     }

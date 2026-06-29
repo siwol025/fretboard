@@ -26,8 +26,7 @@ public class LoginService {
         Member member = memberRepository.findByUsername(request.username())
                 .orElseThrow(() -> new FretBoardException(ExceptionType.INVALID_USERNAME));
 
-        String encryptedPassword = passwordEncryptor.encrypt(request.password());
-        validatePassword(member, encryptedPassword);
+        validatePassword(member, request.password());
 
         return LoginResponse.of(member, jwtTokenProvider.createToken(LoginInfoDto.of(member)));
     }
@@ -39,8 +38,8 @@ public class LoginService {
         return LoginResponse.of(member, jwtTokenProvider.createToken(LoginInfoDto.of(member)));
     }
 
-    private void validatePassword(Member member, String password) {
-        if (!member.matchPassword(password)) {
+    private void validatePassword(Member member, String rawPassword) {
+        if (!member.matchPassword(rawPassword, passwordEncryptor)) {
             throw new FretBoardException(ExceptionType.INVALID_PASSWORD);
         }
     }
