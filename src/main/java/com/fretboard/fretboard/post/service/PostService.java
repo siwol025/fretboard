@@ -8,9 +8,9 @@ import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.common.CacheKey;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
+import com.fretboard.fretboard.global.helper.AuthorizationHelper;
 import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
-import com.fretboard.fretboard.member.repository.MemberRepository;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
@@ -41,15 +41,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PostService {
     private final PostRepository postRepository;
-    private final MemberRepository memberRepository;
     private final ImageService imageService;
     private final BoardRepository boardRepository;
     private final ViewCountService viewCountService;
     private final CommentRepository commentRepository;
+    private final AuthorizationHelper authorizationHelper;
 
     @Transactional
     public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
-        Member loginMember = getMember(memberAuth);
+        Member loginMember = authorizationHelper.getMember(memberAuth);
         Board board = getBoard(request.boardId());
         board.validateWritable(loginMember);
         Post post = request.toPost(loginMember, board);
@@ -67,7 +67,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
-        validateIsAuthor(post.getMember(), getMember(memberAuth));
+        authorizationHelper.validateIsAuthor(post.getMember(), authorizationHelper.getMember(memberAuth));
 
         imageService.cleanUpRemovedImages(post.getContent(), request.content());
         String convertedContent = imageService.convertTempImageUrlsToPermanent(request.content());
@@ -82,7 +82,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
-        validateIsAuthor(post.getMember(), getMember(memberAuth));
+        authorizationHelper.validateIsAuthor(post.getMember(), authorizationHelper.getMember(memberAuth));
         imageService.deleteImage(post.getContent());
 
         postRepository.delete(post);
@@ -141,20 +141,9 @@ public class PostService {
         return MyPostListResponse.of(posts);
     }
 
-    private Member getMember(final MemberAuth memberAuth) {
-        return memberRepository.findById(memberAuth.memberId())
-                .orElseThrow(() -> new FretBoardException(ExceptionType.MEMBER_NOT_FOUND));
-    }
-
     private Board getBoard(final Long boardId) {
         return boardRepository.findById(boardId)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
-    }
-
-    private void validateIsAuthor(Member author, Member loginMember) {
-        if (!author.equals(loginMember)) {
-            throw new FretBoardException(ExceptionType.NOT_AUTHOR);
-        }
     }
 
     public List<PostSummaryDto> getMostPosts() {
