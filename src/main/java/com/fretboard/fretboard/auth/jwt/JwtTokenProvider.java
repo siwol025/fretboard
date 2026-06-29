@@ -6,9 +6,9 @@ import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
+import javax.crypto.SecretKey;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -47,14 +47,15 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date validity = new Date(now.getTime() + expiration);
 
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()
-                .setSubject(loginInfo.memberId().toString())
+                .subject(loginInfo.memberId().toString())
                 .claim(MEMBER_ID_KEY, loginInfo.memberId())
                 .claim(MEMBER_USERNAME_KEY, loginInfo.username())
                 .claim(MEMBER_NICKNAME_KEY, loginInfo.nickname())
-                .setExpiration(validity)
-                .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()), SignatureAlgorithm.HS256)
-                .setHeaderParam("typ", "JWT")
+                .expiration(validity)
+                .signWith(key)
+                .header().add("typ", "JWT").and()
                 .compact();
     }
 
@@ -68,11 +69,12 @@ public class JwtTokenProvider {
 
     private String decode(String token, String secretKey) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(secretKey.getBytes(StandardCharsets.UTF_8))
+            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+            return Jwts.parser()
+                    .verifyWith(key)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody()
+                    .parseSignedClaims(token)
+                    .getPayload()
                     .get(MEMBER_ID_KEY)
                     .toString();
         } catch (ExpiredJwtException exception) {
