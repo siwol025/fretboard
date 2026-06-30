@@ -37,7 +37,7 @@ public class CommentService {
     }
 
     public CommentResponse findComments(final Long postId) {
-        List<Comment> comments = commentRepository.findCommentsByPostId(postId);
+        List<Comment> comments = commentRepository.findCommentsByPostIdWithMember(postId);
 
         return CommentResponse.createByComments(comments);
     }

@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,6 +116,20 @@ class CommentServiceTest {
 
         // then
         assertThat(comment.getContent()).isEqualTo("수정된 댓글 내용");
+    }
+
+    @Test
+    void findComments_Member를_JOIN_FETCH로_함께_조회() {
+        // given
+        Long postId = 10L;
+        Comment comment = Comment.parent("댓글 내용", member, post);
+        given(commentRepository.findCommentsByPostIdWithMember(postId)).willReturn(List.of(comment));
+
+        // when
+        commentService.findComments(postId);
+
+        // then
+        verify(commentRepository).findCommentsByPostIdWithMember(postId);
     }
 
     @Test
