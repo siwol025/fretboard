@@ -28,7 +28,7 @@ public class BoardController {
     @PostMapping
     public ResponseEntity<Long> createBoard(@LoginMember MemberAuth memberAuth,
                                             @Valid @RequestBody BoardRequest request) {
-        Long boardId = boardService.createBoard(request);
+        Long boardId = boardService.createBoard(request, memberAuth);
         return ResponseEntity.created(URI.create("/board/" + boardId)).build();
     }
 
@@ -36,7 +36,7 @@ public class BoardController {
     public ResponseEntity<Void> editBoard(@PathVariable Long id,
                                                @LoginMember MemberAuth memberAuth,
                                                @Valid @RequestBody BoardRequest request) {
-        boardService.editBoard(id, request);
+        boardService.editBoard(id, request, memberAuth);
         return ResponseEntity.noContent().build();
     }
 
@@ -55,7 +55,7 @@ public class BoardController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBoard(@PathVariable Long id,
                                             @LoginMember MemberAuth memberAuth) {
-        boardService.deleteBoard(id);
+        boardService.deleteBoard(id, memberAuth);
         return ResponseEntity.noContent().build();
     }
 }

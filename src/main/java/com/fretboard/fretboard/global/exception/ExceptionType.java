@@ -26,7 +26,9 @@ public enum ExceptionType {
     S3_FORMAT_EXCEPTION(HttpStatus.BAD_REQUEST, "S3 이미지 url 형식이 잘못되었습니다."),
     S3_DELETE_EXCEPTION(HttpStatus.BAD_REQUEST, "S3에서 이미지 삭제 중 오류가 발생했습니다."),
 
-    FORBIDDEN_WRITE_PERMISSION(HttpStatus.FORBIDDEN, "글쓰기 권한이 없습니다.");
+    FORBIDDEN_WRITE_PERMISSION(HttpStatus.FORBIDDEN, "글쓰기 권한이 없습니다."),
+
+    FORBIDDEN(HttpStatus.FORBIDDEN, "관리자만 접근 가능합니다.");
     private final HttpStatus httpStatus;
     private final String message;
 
