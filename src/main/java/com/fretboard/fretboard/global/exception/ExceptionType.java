@@ -11,6 +11,9 @@ public enum ExceptionType {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
     S3_NOT_FOUND(HttpStatus.NOT_FOUND, "S3에 해당 이미지가 존재하지 않습니다."),
 
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않는 파일 형식입니다."),
+    EMPTY_FILE(HttpStatus.BAD_REQUEST, "파일이 비어있습니다."),
+
     DUPLICATION_USERNAME(HttpStatus.BAD_REQUEST, "중복된 아이디입니다."),
     DUPLICATION_NICKNAME(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),
     INVALID_USERNAME(HttpStatus.BAD_REQUEST, "아이디 또는 비밀번호가 일치하지 않습니다."),
