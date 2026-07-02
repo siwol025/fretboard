@@ -5,6 +5,8 @@ import com.fretboard.fretboard.auth.jwt.JwtAuthFilter;
 import com.fretboard.fretboard.auth.jwt.JwtTokenProvider;
 import com.fretboard.fretboard.global.auth.resolver.LoginMemberArgumentResolver;
 import com.fretboard.fretboard.global.exception.ExceptionResponseHandler;
+import com.fretboard.fretboard.global.exception.ExceptionType;
+import com.fretboard.fretboard.global.exception.FretBoardException;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.service.PostService;
@@ -18,16 +20,15 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.LocalDateTime;
 
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -74,7 +75,11 @@ class PostControllerTest {
         // when & then
         mockMvc.perform(get("/api/posts/1"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(emptyString())));
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("테스트 제목"))
+                .andExpect(jsonPath("$.author").value("작성자"))
+                .andExpect(jsonPath("$.boardTitle").value("자유게시판"))
+                .andExpect(jsonPath("$.viewCount").value(0));
     }
 
     @Test
@@ -88,10 +93,7 @@ class PostControllerTest {
         mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody)
-                        .with(req -> {
-                            req.setAttribute("memberId", "1");
-                            return req;
-                        }))
+                        .with(authenticatedMember("1")))
                 .andExpect(status().isCreated());
     }
 
@@ -106,6 +108,40 @@ class PostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 게시글 조회 시 404 응답")
+    void getPost_존재하지_않는_게시글_404_응답() throws Exception {
+        // given
+        given(postService.getPostDetail(999L)).willThrow(new FretBoardException(ExceptionType.POST_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/api/posts/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("게시글 작성 시 제목이 빈값이면 400 응답")
+    void addPost_제목_빈값이면_400_응답() throws Exception {
+        // given
+        String requestBody = objectMapper.writeValueAsString(
+                new PostNewRequest(1L, "", "내용")
+        );
+
+        // when & then
+        mockMvc.perform(post("/api/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .with(authenticatedMember("1")))
+                .andExpect(status().isBadRequest());
+    }
+
+    private RequestPostProcessor authenticatedMember(String memberId) {
+        return req -> {
+            req.setAttribute("memberId", memberId);
+            return req;
+        };
     }
 
     private String validPostRequestBody() throws Exception {
