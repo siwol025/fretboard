@@ -2,7 +2,7 @@ package com.fretboard.fretboard.image.service;
 
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
-import com.fretboard.fretboard.image.infrastructure.AwsS3Provider;
+import com.fretboard.fretboard.image.infrastructure.FileStorageProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -21,7 +21,7 @@ public class ImageService {
             "image/jpeg", "image/png", "image/webp", "image/gif"
     );
 
-    private final AwsS3Provider awsS3Provider;
+    private final FileStorageProvider fileStorageProvider;
 
     public String upload(MultipartFile file) {
         if (file.isEmpty()) {
@@ -30,7 +30,7 @@ public class ImageService {
         if (!ALLOWED_TYPES.contains(file.getContentType())) {
             throw new FretBoardException(ExceptionType.INVALID_FILE_TYPE);
         }
-        return awsS3Provider.uploadImage(file);
+        return fileStorageProvider.uploadImage(file);
     }
 
     public String convertTempImageUrlsToPermanent(String htmlContent) {
@@ -39,7 +39,7 @@ public class ImageService {
 
         for (Element img : images) {
             String imgUrl = img.attr("src");
-            String permanentUrl = awsS3Provider.copyImageToPermanentStorage(imgUrl);
+            String permanentUrl = fileStorageProvider.copyImageToPermanentStorage(imgUrl);
             img.attr("src", permanentUrl);
         }
 
@@ -49,7 +49,7 @@ public class ImageService {
     public void cleanUpRemovedImages(String oldHtml, String newHtml) {
         List<String> removedImageUrls = getRemovedImageUrls(oldHtml, newHtml);
         for (String url : removedImageUrls) {
-            awsS3Provider.deleteImage(url);
+            fileStorageProvider.deleteImage(url);
         }
     }
 
@@ -68,7 +68,7 @@ public class ImageService {
     public void deleteImage(String htmlContent) {
         List<String> removedImageUrls = extract(htmlContent);
         for (String url : removedImageUrls) {
-            awsS3Provider.deleteImage(url);
+            fileStorageProvider.deleteImage(url);
         }
     }
 }

@@ -2,7 +2,7 @@ package com.fretboard.fretboard.image.service;
 
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
-import com.fretboard.fretboard.image.infrastructure.AwsS3Provider;
+import com.fretboard.fretboard.image.infrastructure.FileStorageProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,7 +18,7 @@ import static org.mockito.BDDMockito.given;
 class ImageServiceTest {
 
     @Mock
-    private AwsS3Provider awsS3Provider;
+    private FileStorageProvider fileStorageProvider;
 
     @InjectMocks
     private ImageService imageService;
@@ -60,7 +60,7 @@ class ImageServiceTest {
         MultipartFile file = org.mockito.Mockito.mock(MultipartFile.class);
         given(file.isEmpty()).willReturn(false);
         given(file.getContentType()).willReturn("image/jpeg");
-        given(awsS3Provider.uploadImage(file)).willReturn("https://s3.amazonaws.com/bucket/image.jpg");
+        given(fileStorageProvider.uploadImage(file)).willReturn("https://s3.amazonaws.com/bucket/image.jpg");
 
         // when
         String result = imageService.upload(file);

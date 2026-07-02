@@ -16,7 +16,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Component
-public class AwsS3Provider {
+public class AwsS3Provider implements FileStorageProvider {
     private final S3Client s3Client;
     private final String bucket;
     private final String imageBaseUri;
