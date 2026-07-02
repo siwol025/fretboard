@@ -32,7 +32,20 @@ class CredentialLeakTest {
         assertSensitiveKeysUseEnvVars("src/main/resources/application-dev.yml");
     }
 
+    @Test
+    void application_test_yml에_고엔트로피_시크릿_없어야_한다() throws IOException {
+        assertSensitiveKeysUseEnvVars("src/main/resources/application-test.yml", true);
+    }
+
     private void assertSensitiveKeysUseEnvVars(String relativePath) throws IOException {
+        assertSensitiveKeysUseEnvVars(relativePath, false);
+    }
+
+    /**
+     * 민감 키(SENSITIVE_KEYS)의 값이 환경변수 플레이스홀더(${...})를 사용하는지 검증한다.
+     * allowTestPrefix가 true이면 'test-'로 시작하는 값도 허용한다 (테스트 전용 설정 파일용).
+     */
+    private void assertSensitiveKeysUseEnvVars(String relativePath, boolean allowTestPrefix) throws IOException {
         Path path = Path.of(relativePath);
         if (!Files.exists(path)) {
             return; // gitignore된 파일이 없는 CI 환경에서는 통과
@@ -45,9 +58,13 @@ class CredentialLeakTest {
                 if (line.trim().startsWith(key)) {
                     String value = line.substring(line.indexOf(key) + key.length()).trim();
                     if (!value.isEmpty()) {
-                        assertThat(ENV_VAR_PATTERN.matcher(value).matches())
-                                .as("'%s' %d번째 줄: '%s' 값이 환경변수 플레이스홀더(${{...}})를 사용해야 합니다. 현재 값: %s",
-                                        relativePath, i + 1, key, value)
+                        boolean isEnvVar = ENV_VAR_PATTERN.matcher(value).matches();
+                        boolean isAccepted = isEnvVar || (allowTestPrefix && value.startsWith("test-"));
+                        assertThat(isAccepted)
+                                .as("'%s' %d번째 줄: '%s' 값이 환경변수 플레이스홀더(${...})%s를 사용해야 합니다. 현재 값: %s",
+                                        relativePath, i + 1, key,
+                                        allowTestPrefix ? " 또는 'test-' 접두사" : "",
+                                        value)
                                 .isTrue();
                     }
                 }
