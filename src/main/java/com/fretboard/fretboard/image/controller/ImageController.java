@@ -1,5 +1,7 @@
 package com.fretboard.fretboard.image.controller;
 
+import com.fretboard.fretboard.global.auth.annotation.LoginMember;
+import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.image.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +18,8 @@ public class ImageController {
     private final ImageService imageService;
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadImage(@RequestPart MultipartFile file) {
-        String upload = imageService.upload(file);
-        return ResponseEntity.ok().body(upload);
+    public ResponseEntity<String> uploadImage(@LoginMember MemberAuth memberAuth, @RequestPart MultipartFile file) {
+        String imageUrl = imageService.upload(file);
+        return ResponseEntity.ok().body(imageUrl);
     }
 }
