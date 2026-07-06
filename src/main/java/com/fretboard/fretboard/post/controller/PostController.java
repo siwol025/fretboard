@@ -51,7 +51,7 @@ public class PostController {
     @GetMapping(params = {"boardId", "keyword"})
     public ResponseEntity<PostSearchListResponse> searchPosts(@RequestParam Long boardId,
                                                               @RequestParam String keyword,
-                                                              @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                              @PageableDefault(size = 10) Pageable pageable) {
         PostSearchListResponse response = postService.searchPosts(boardId, keyword, pageable);
         return ResponseEntity.ok().body(response);
     }

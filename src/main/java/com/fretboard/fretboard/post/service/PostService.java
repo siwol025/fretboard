@@ -34,6 +34,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -140,7 +141,8 @@ public class PostService {
     }
 
     public PostSearchListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
-        Page<PostSearchResultProjection> posts = postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable);
+        Page<PostSearchResultProjection> posts = postRepository.searchByBoardIdAndKeyword(
+                boardId, keyword, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
 
         List<Long> postIds = posts.getContent().stream()
                 .map(PostSearchResultProjection::getId)
