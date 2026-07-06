@@ -48,7 +48,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 JOIN board b ON b.id = p.board_id
                 WHERE p.board_id = :boardId
                   AND MATCH(p.title, p.content) AGAINST(:keyword IN BOOLEAN MODE)
-                ORDER BY p.created_at DESC
+                ORDER BY MATCH(p.title, p.content) AGAINST(:keyword IN BOOLEAN MODE) DESC
                 """,
             countQuery = """
                 SELECT COUNT(*) FROM post p
