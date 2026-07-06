@@ -12,10 +12,13 @@ import com.fretboard.fretboard.global.helper.AuthorizationHelper;
 import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
+import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
+import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.PostWithCommentCountDto;
@@ -128,17 +131,42 @@ public class PostService {
                                 post.createdAt(),
                                 post.viewCount(),
                                 commentCountMap.getOrDefault(post.id(), 0L)
-                        )).toList()
-                ,pageable,
+                        )).toList(),
+                pageable,
                 posts.getTotalElements()
         );
 
         return PostListResponse.of(resultPage);
     }
 
-    public MyPostListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
-        Page<Post> posts = postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable);
-        return MyPostListResponse.of(posts);
+    public PostSearchListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
+        Page<PostSearchResultProjection> posts = postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable);
+
+        List<Long> postIds = posts.getContent().stream()
+                .map(PostSearchResultProjection::getId)
+                .toList();
+
+        List<PostCommentCountDto> counts = commentRepository.countCommentsByPostIds(postIds);
+        Map<Long, Long> commentCountMap = counts.stream()
+                .collect(Collectors.toMap(PostCommentCountDto::postId, PostCommentCountDto::commentCount));
+
+        Page<PostSearchSummaryDto> resultPage = new PageImpl<>(
+                posts.getContent().stream()
+                        .map(post -> new PostSearchSummaryDto(
+                                post.getId(),
+                                post.getTitle(),
+                                post.getAuthor(),
+                                post.getBoardId(),
+                                post.getBoardTitle(),
+                                post.getCreatedAt(),
+                                post.getViewCount(),
+                                commentCountMap.getOrDefault(post.getId(), 0L)
+                        )).toList(),
+                pageable,
+                posts.getTotalElements()
+        );
+
+        return PostSearchListResponse.of(resultPage);
     }
 
     private Board getBoard(final Long boardId) {

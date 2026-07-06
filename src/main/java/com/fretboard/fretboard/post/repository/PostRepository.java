@@ -1,6 +1,7 @@
 package com.fretboard.fretboard.post.repository;
 
 import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -39,24 +40,35 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query(
             value = """
-                SELECT p
-                FROM Post p
-                WHERE p.board.id = :boardId
-                AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%)
-            """
+                SELECT p.id, p.title, m.nickname AS author,
+                       b.id AS boardId, b.title AS boardTitle,
+                       p.created_at AS createdAt, p.view_count AS viewCount
+                FROM post p
+                JOIN member m ON m.id = p.member_id
+                JOIN board b ON b.id = p.board_id
+                WHERE p.board_id = :boardId
+                  AND MATCH(p.title, p.content) AGAINST(:keyword IN BOOLEAN MODE)
+                ORDER BY p.created_at DESC
+                """,
+            countQuery = """
+                SELECT COUNT(*) FROM post p
+                WHERE p.board_id = :boardId
+                  AND MATCH(p.title, p.content) AGAINST(:keyword IN BOOLEAN MODE)
+                """,
+            nativeQuery = true
     )
-    Page<Post> searchByBoardIdAndKeyword(Long boardId, String keyword, Pageable pageable);
+    Page<PostSearchResultProjection> searchByBoardIdAndKeyword(@Param("boardId") Long boardId, @Param("keyword") String keyword, Pageable pageable);
 
     Page<Post> findByMemberId(Long memberId, Pageable pageable);
 
-    @Query("""
-    select new com.fretboard.fretboard.post.dto.PostSummaryDto(
+    @Query(value = """
+                select new com.fretboard.fretboard.post.dto.PostSummaryDto(
                     p.id, p.title, m.nickname, p.createdAt, p.viewCount
                 )
-        FROM Post p
-        join p.member m
-        WHERE p.id IN :postIds
-    """)
+                from Post p
+                join p.member m
+                where p.id in :postIds
+            """)
     List<PostSummaryDto> findByPostIds(List<Long> postIds);
 
     @Modifying(clearAutomatically = true)

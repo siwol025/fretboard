@@ -12,8 +12,11 @@ import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
 import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
+import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
+import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,16 +24,24 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,6 +78,18 @@ class PostServiceTest {
                 .nickname("testnick")
                 .role(Role.USER)
                 .build();
+    }
+
+    private PostSearchResultProjection mockSearchProjection(Long boardId) {
+        PostSearchResultProjection proj = mock(PostSearchResultProjection.class);
+        given(proj.getId()).willReturn(1L);
+        given(proj.getTitle()).willReturn("기타 입문");
+        given(proj.getAuthor()).willReturn("testnick");
+        given(proj.getBoardId()).willReturn(boardId);
+        given(proj.getBoardTitle()).willReturn("자유게시판");
+        given(proj.getCreatedAt()).willReturn(LocalDateTime.now());
+        given(proj.getViewCount()).willReturn(0L);
+        return proj;
     }
 
     @Test
@@ -227,6 +250,98 @@ class PostServiceTest {
         // then
         verify(postRepository).delete(post);
         verify(viewCountService).deleteViewCount(postId);
+    }
+
+    @Test
+    void searchPosts_키워드_검색시_commentRepository로_댓글수_조회() {
+        // given
+        Long boardId = 10L;
+        String keyword = "기타";
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSearchResultProjection proj = mockSearchProjection(boardId);
+        Page<PostSearchResultProjection> resultPage = new PageImpl<>(List.of(proj), pageable, 1);
+
+        given(postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable))
+                .willReturn(resultPage);
+        given(commentRepository.countCommentsByPostIds(anyList()))
+                .willReturn(List.of());
+
+        // when
+        postService.searchPosts(boardId, keyword, pageable);
+
+        // then
+        verify(commentRepository).countCommentsByPostIds(List.of(1L));
+    }
+
+    @Test
+    void searchPosts_결과_없으면_빈_페이지_반환() {
+        // given
+        Long boardId = 10L;
+        String keyword = "없는키워드";
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<PostSearchResultProjection> emptyPage = Page.empty(pageable);
+        given(postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable))
+                .willReturn(emptyPage);
+        given(commentRepository.countCommentsByPostIds(List.of()))
+                .willReturn(List.of());
+
+        // when
+        PostSearchListResponse response = postService.searchPosts(boardId, keyword, pageable);
+
+        // then
+        assertThat(response.totalElements()).isEqualTo(0L);
+        assertThat(response.posts()).isEmpty();
+    }
+
+    @Test
+    void searchPosts_결과에_boardId_boardTitle_commentCount_포함() {
+        // given
+        Long boardId = 10L;
+        String boardTitle = "자유게시판";
+        String keyword = "기타";
+        Long postId = 1L;
+        Long expectedCommentCount = 3L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSearchResultProjection proj = mockSearchProjection(boardId);
+        Page<PostSearchResultProjection> resultPage = new PageImpl<>(List.of(proj), pageable, 1);
+
+        given(postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable))
+                .willReturn(resultPage);
+        given(commentRepository.countCommentsByPostIds(List.of(postId)))
+                .willReturn(List.of(new com.fretboard.fretboard.comment.dto.PostCommentCountDto(postId, expectedCommentCount)));
+
+        // when
+        PostSearchListResponse response = postService.searchPosts(boardId, keyword, pageable);
+
+        // then
+        assertThat(response.posts().get(0)).isInstanceOf(PostSearchSummaryDto.class);
+        PostSearchSummaryDto first = response.posts().get(0);
+        assertThat(first.boardId()).isEqualTo(boardId);
+        assertThat(first.boardTitle()).isEqualTo(boardTitle);
+        assertThat(first.commentCount()).isEqualTo(expectedCommentCount);
+    }
+
+    @Test
+    void searchPosts_FULLTEXT_쿼리_호출시_boardId_keyword_전달() {
+        // given
+        Long boardId = 10L;
+        String keyword = "기타";
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSearchResultProjection proj = mockSearchProjection(boardId);
+        Page<PostSearchResultProjection> projPage = new PageImpl<>(List.of(proj), pageable, 1);
+        given(postRepository.searchByBoardIdAndKeyword(boardId, keyword, pageable))
+                .willReturn(projPage);
+        given(commentRepository.countCommentsByPostIds(anyList())).willReturn(List.of());
+
+        // when
+        postService.searchPosts(boardId, keyword, pageable);
+
+        // then
+        verify(postRepository).searchByBoardIdAndKeyword(boardId, keyword, pageable);
     }
 
     @Test

@@ -5,8 +5,8 @@ import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
-import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.service.PostService;
@@ -49,10 +49,10 @@ public class PostController {
     }
 
     @GetMapping(params = {"boardId", "keyword"})
-    public ResponseEntity<MyPostListResponse> searchPosts(@RequestParam Long boardId,
-                                                          @RequestParam String keyword,
-                                                          @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        MyPostListResponse response = postService.searchPosts(boardId, keyword, pageable);
+    public ResponseEntity<PostSearchListResponse> searchPosts(@RequestParam Long boardId,
+                                                              @RequestParam String keyword,
+                                                              @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PostSearchListResponse response = postService.searchPosts(boardId, keyword, pageable);
         return ResponseEntity.ok().body(response);
     }
 
