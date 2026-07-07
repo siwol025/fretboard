@@ -50,11 +50,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
         String token = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (isTokenBlank(token)) {
+        if (isTokenBlank(token) || !token.startsWith("Bearer ")) {
             sendUnauthorizedResponse(request, response, "로그인을 해주세요.");
             return;
         }
-        token = token.split("Bearer|bearer")[1];
+        token = token.substring(7);
         try {
             String memberId = tokenProvider.decodeAccessToken(token);
             request.setAttribute(MEMBER_ID_ATTRIBUTE, memberId);

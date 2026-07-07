@@ -54,4 +54,19 @@ class JwtAuthFilterTest {
         assertThat(response.getHeader("Access-Control-Allow-Origin"))
                 .isEqualTo("http://localhost:5173");
     }
+
+    @Test
+    void Bearer_뒤_토큰_없음_401_반환() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+        request.setRequestURI("/api/posts");
+        request.addHeader("Authorization", "Bearer");   // "Bearer" with no token
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        filter.doFilter(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(401);
+    }
 }
