@@ -3,6 +3,7 @@ package com.fretboard.fretboard.board.dto.request;
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.domain.BoardType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record BoardRequest(
@@ -16,7 +17,7 @@ public record BoardRequest(
         @Size(max = 50, message = "0 ~ 50자 사이의 값을 입력해주세요.")
         String slug,
 
-        @NotBlank
+        @NotNull
         BoardType boardType
 ) {
     public Board toBoard() {
