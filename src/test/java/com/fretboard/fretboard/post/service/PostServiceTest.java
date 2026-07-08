@@ -3,6 +3,7 @@ package com.fretboard.fretboard.post.service;
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.domain.BoardType;
 import com.fretboard.fretboard.board.repository.BoardRepository;
+import com.fretboard.fretboard.comment.dto.PostCommentCountDto;
 import com.fretboard.fretboard.comment.repository.CommentRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;
@@ -14,8 +15,10 @@ import com.fretboard.fretboard.member.domain.Role;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
+import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
+import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -377,5 +380,31 @@ class PostServiceTest {
                     FretBoardException fbe = (FretBoardException) ex;
                     assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.NOT_AUTHOR);
                 });
+    }
+
+    @Test
+    void getPostsByBoardId_commentRepository로_댓글수_배치조회하고_결과_반환() {
+        // given
+        Long boardId = 10L;
+        Long postId = 1L;
+        Long expectedCommentCount = 5L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSummaryDto summaryDto = new PostSummaryDto(postId, "기타 입문", "testnick", LocalDateTime.now(), 0L);
+        Page<PostSummaryDto> postPage = new PageImpl<>(List.of(summaryDto), pageable, 1);
+
+        given(postRepository.findPostSummaryByBoardId(boardId, pageable)).willReturn(postPage);
+        given(commentRepository.countCommentsByPostIds(List.of(postId)))
+                .willReturn(List.of(new PostCommentCountDto(postId, expectedCommentCount)));
+
+        // when
+        PostListResponse response = postService.getPostsByBoardId(boardId, pageable);
+
+        // then
+        verify(commentRepository).countCommentsByPostIds(List.of(postId));
+        assertThat(response.totalElements()).isEqualTo(1L);
+        assertThat(response.posts()).hasSize(1);
+        assertThat(response.posts().get(0).id()).isEqualTo(postId);
+        assertThat(response.posts().get(0).commentCount()).isEqualTo(expectedCommentCount);
     }
 }

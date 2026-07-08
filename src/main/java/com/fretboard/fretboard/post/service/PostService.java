@@ -119,9 +119,7 @@ public class PostService {
                 .map(PostSummaryDto::id)
                 .toList();
 
-        List<PostCommentCountDto> counts = commentRepository.countCommentsByPostIds(postIds);
-        Map<Long, Long> commentCountMap = counts.stream()
-                .collect(Collectors.toMap(PostCommentCountDto::postId, PostCommentCountDto::commentCount));
+        Map<Long, Long> commentCountMap = buildCommentCountMap(postIds);
 
         Page<PostWithCommentCountDto> resultPage = new PageImpl<>(
                 posts.getContent().stream()
@@ -148,9 +146,7 @@ public class PostService {
                 .map(PostSearchResultProjection::getId)
                 .toList();
 
-        List<PostCommentCountDto> counts = commentRepository.countCommentsByPostIds(postIds);
-        Map<Long, Long> commentCountMap = counts.stream()
-                .collect(Collectors.toMap(PostCommentCountDto::postId, PostCommentCountDto::commentCount));
+        Map<Long, Long> commentCountMap = buildCommentCountMap(postIds);
 
         Page<PostSearchSummaryDto> resultPage = new PageImpl<>(
                 posts.getContent().stream()
@@ -169,6 +165,12 @@ public class PostService {
         );
 
         return PostSearchListResponse.of(resultPage);
+    }
+
+    private Map<Long, Long> buildCommentCountMap(List<Long> postIds) {
+        List<PostCommentCountDto> counts = commentRepository.countCommentsByPostIds(postIds);
+        return counts.stream()
+                .collect(Collectors.toMap(PostCommentCountDto::postId, PostCommentCountDto::commentCount));
     }
 
     private Board getBoard(final Long boardId) {
