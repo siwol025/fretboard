@@ -68,4 +68,25 @@ class ImageServiceTest {
         // then
         assertThat(result).isEqualTo("https://s3.amazonaws.com/bucket/image.jpg");
     }
+
+    @Test
+    void convertTempImageUrlsToPermanent_스크립트_태그_제거() {
+        String html = "<p>안전한 내용</p><script>alert('XSS')</script>";
+
+        String result = imageService.convertTempImageUrlsToPermanent(html);
+
+        assertThat(result).doesNotContain("<script>");
+    }
+
+    @Test
+    void convertTempImageUrlsToPermanent_onerror_속성_제거() {
+        given(fileStorageProvider.copyImageToPermanentStorage("https://temp.example.com/img.jpg"))
+                .willReturn("https://perm.example.com/img.jpg");
+        String html = "<img src=\"https://temp.example.com/img.jpg\" onerror=\"alert(1)\">";
+
+        String result = imageService.convertTempImageUrlsToPermanent(html);
+
+        assertThat(result).contains("https://perm.example.com/img.jpg");
+        assertThat(result).doesNotContain("onerror");
+    }
 }

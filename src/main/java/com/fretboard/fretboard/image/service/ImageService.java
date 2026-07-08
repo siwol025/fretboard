@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,7 @@ public class ImageService {
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
     );
+    private static final Safelist CONTENT_SAFELIST = Safelist.relaxed();
 
     private final FileStorageProvider fileStorageProvider;
 
@@ -43,7 +45,7 @@ public class ImageService {
             img.attr("src", permanentUrl);
         }
 
-        return doc.body().html();
+        return Jsoup.clean(doc.body().html(), CONTENT_SAFELIST);
     }
 
     public void cleanUpRemovedImages(String oldHtml, String newHtml) {
