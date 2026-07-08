@@ -34,10 +34,7 @@ public class BoardService {
         requireAdmin(memberAuth);
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.BOARD_NOT_FOUND));
-        board.setTitle(request.title());
-        board.setDescription(request.description());
-        board.setSlug(request.slug());
-        board.setBoardType(request.boardType());
+        board.update(request.title(), request.description(), request.slug(), request.boardType());
     }
 
     @Transactional

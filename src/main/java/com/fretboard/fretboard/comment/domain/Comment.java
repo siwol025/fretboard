@@ -18,7 +18,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(indexes = {
@@ -26,7 +25,6 @@ import lombok.Setter;
         @Index(name = "idx_comment_member_id", columnList = "member_id")
 })
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment extends BaseEntity {
@@ -55,6 +53,10 @@ public class Comment extends BaseEntity {
         this.post = post;
         this.member = member;
         this.parent = parent;
+    }
+
+    public void updateContent(final String content) {
+        this.content = content;
     }
 
     public static Comment parent(String content, Member member, Post post) {

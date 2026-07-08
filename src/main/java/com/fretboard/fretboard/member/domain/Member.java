@@ -15,11 +15,9 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id", callSuper = false)
@@ -44,6 +42,14 @@ public class Member extends BaseEntity {
     @Builder
     public Member(String username, String password, String nickname, Role role) {
         this(null, username, password, nickname, role);
+    }
+
+    public void changePassword(final String encryptedPassword) {
+        this.password = encryptedPassword;
+    }
+
+    public void changeNickname(final String nickname) {
+        this.nickname = nickname;
     }
 
     public boolean matchPassword(String rawPassword, PasswordEncryptor encryptor) {

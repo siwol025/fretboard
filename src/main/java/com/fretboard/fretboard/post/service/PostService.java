@@ -56,10 +56,9 @@ public class PostService {
         Member loginMember = authorizationHelper.getMember(memberAuth);
         Board board = getBoard(request.boardId());
         board.validateWritable(loginMember);
-        Post post = request.toPost(loginMember, board);
 
-        String convertedContent = imageService.convertTempImageUrlsToPermanent(post.getContent());
-        post.setContent(convertedContent);
+        String convertedContent = imageService.convertTempImageUrlsToPermanent(request.content());
+        Post post = request.toPost(loginMember, board, convertedContent);
 
         Post savedPost = postRepository.save(post);
         return savedPost.getId();
@@ -76,8 +75,7 @@ public class PostService {
         imageService.cleanUpRemovedImages(post.getContent(), request.content());
         String convertedContent = imageService.convertTempImageUrlsToPermanent(request.content());
 
-        post.setTitle(request.title());
-        post.setContent(convertedContent);
+        post.edit(request.title(), convertedContent);
     }
 
     @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY)

@@ -16,10 +16,10 @@ public record PostNewRequest(
         @NotBlank(message = "본문을 입력해주세요.")
         String content
 ) {
-    public Post toPost(final Member member, final Board board) {
+    public Post toPost(final Member member, final Board board, final String convertedContent) {
         return Post.builder()
                 .title(title)
-                .content(content)
+                .content(convertedContent)
                 .member(member)
                 .board(board)
                 .build();

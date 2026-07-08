@@ -23,7 +23,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(indexes = {
@@ -32,7 +31,6 @@ import lombok.Setter;
         @Index(name = "idx_post_created_at", columnList = "created_at")
 })
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post extends BaseEntity {
@@ -69,8 +67,12 @@ public class Post extends BaseEntity {
         this.viewCount = (viewCount != null) ? viewCount : 0L;
     }
 
+    public void edit(final String title, final String content) {
+        this.title = title;
+        this.content = content;
+    }
+
     public void addComment(final Comment comment) {
         comments.add(comment);
-        comment.setPost(this);
     }
 }

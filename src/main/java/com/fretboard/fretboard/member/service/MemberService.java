@@ -35,14 +35,14 @@ public class MemberService {
         validateCurrentPassword(member, request.currentPassword());
 
         String encryptedNewPassword = passwordEncryptor.encode(request.newPassword());
-        member.setPassword(encryptedNewPassword);
+        member.changePassword(encryptedNewPassword);
     }
 
     @Transactional
     public MemberEditResponse updateMemberInfo(final MemberAuth memberAuth, final MemberEditRequest request) {
         Member member = getMember(memberAuth.memberId());
         validateUniqueNickname(request.newNickname());
-        member.setNickname(request.newNickname());
+        member.changeNickname(request.newNickname());
 
         return MemberEditResponse.builder()
                 .newNickname(member.getNickname())

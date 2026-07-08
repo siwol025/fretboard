@@ -19,11 +19,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Board extends BaseEntity {
@@ -45,6 +43,13 @@ public class Board extends BaseEntity {
 
     @Builder
     public Board(String title, String description, String slug, BoardType boardType) {
+        this.title = title;
+        this.description = description;
+        this.slug = slug;
+        this.boardType = boardType;
+    }
+
+    public void update(final String title, final String description, final String slug, final BoardType boardType) {
         this.title = title;
         this.description = description;
         this.slug = slug;

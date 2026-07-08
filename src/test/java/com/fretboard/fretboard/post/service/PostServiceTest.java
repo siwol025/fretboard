@@ -46,6 +46,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
@@ -118,7 +119,7 @@ class PostServiceTest {
                 .member(member)
                 .board(board)
                 .build();
-        savedPost.setId(savedPostId);
+        ReflectionTestUtils.setField(savedPost, "id", savedPostId);
 
         given(authorizationHelper.getMember(memberAuth)).willReturn(member);
         given(boardRepository.findById(boardId)).willReturn(Optional.of(board));

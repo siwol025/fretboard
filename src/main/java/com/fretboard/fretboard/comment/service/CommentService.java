@@ -48,7 +48,7 @@ public class CommentService {
                 .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
 
         authorizationHelper.validateIsAuthor(comment.getMember(), authorizationHelper.getMember(memberAuth));
-        comment.setContent(commentRequest.content());
+        comment.updateContent(commentRequest.content());
     }
 
     @Transactional

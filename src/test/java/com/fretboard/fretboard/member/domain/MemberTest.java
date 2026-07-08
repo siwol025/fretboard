@@ -4,6 +4,7 @@ import com.fretboard.fretboard.auth.encryptor.PasswordEncryptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,5 +46,44 @@ class MemberTest {
 
         // when & then
         assertFalse(member.matchPassword("wrongRawPwd", encryptor));
+    }
+
+    @Test
+    @DisplayName("member.changePassword() 호출 시 password가 변경된다")
+    void changePassword_changesPasswordField() {
+        // given
+        String originalEncoded = encryptor.encode("original");
+        Member member = Member.builder()
+                .username("testuser")
+                .password(originalEncoded)
+                .nickname("testnick")
+                .role(Role.USER)
+                .build();
+
+        String newEncoded = encryptor.encode("newpassword");
+
+        // when
+        member.changePassword(newEncoded);
+
+        // then
+        assertEquals(newEncoded, member.getPassword());
+    }
+
+    @Test
+    @DisplayName("member.changeNickname() 호출 시 nickname이 변경된다")
+    void changeNickname_changesNicknameField() {
+        // given
+        Member member = Member.builder()
+                .username("testuser")
+                .password("pass")
+                .nickname("oldnick")
+                .role(Role.USER)
+                .build();
+
+        // when
+        member.changeNickname("newnick");
+
+        // then
+        assertEquals("newnick", member.getNickname());
     }
 }
