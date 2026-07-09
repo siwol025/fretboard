@@ -8,6 +8,7 @@ import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
 import com.fretboard.fretboard.global.helper.AuthorizationHelper;
+import com.fretboard.fretboard.global.helper.HtmlSanitizer;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.repository.PostRepository;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CommentService {
+
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final AuthorizationHelper authorizationHelper;
@@ -30,7 +32,8 @@ public class CommentService {
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
         Member member = authorizationHelper.getMember(memberAuth);
 
-        Comment comment = Comment.parent(commentRequest.content(), member, post);
+        String sanitized = HtmlSanitizer.sanitize(commentRequest.content());
+        Comment comment = Comment.parent(sanitized, member, post);
         post.addComment(comment);
         commentRepository.save(comment);
         return comment.getId();
@@ -48,7 +51,7 @@ public class CommentService {
                 .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
 
         authorizationHelper.validateIsAuthor(comment.getMember(), authorizationHelper.getMember(memberAuth));
-        comment.updateContent(commentRequest.content());
+        comment.updateContent(HtmlSanitizer.sanitize(commentRequest.content()));
     }
 
     @Transactional

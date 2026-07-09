@@ -133,6 +133,44 @@ class CommentServiceTest {
     }
 
     @Test
+    void addComment_XSS_script태그_제거후_저장() {
+        // given
+        Long postId = 10L;
+        CommentRequest request = new CommentRequest("<script>alert('xss')</script>텍스트");
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(commentRepository.save(any(Comment.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        commentService.addComment(postId, request, memberAuth);
+
+        // then
+        assertThat(post.getComments()).hasSize(1);
+        assertThat(post.getComments().get(0).getContent()).doesNotContain("<script>");
+        assertThat(post.getComments().get(0).getContent()).contains("텍스트");
+    }
+
+    @Test
+    void editComment_XSS_script태그_제거후_저장() {
+        // given
+        Long commentId = 20L;
+        CommentRequest request = new CommentRequest("<script>alert('xss')</script>수정내용");
+
+        Comment comment = Comment.parent("원래 댓글 내용", member, post);
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+
+        // when
+        commentService.editComment(commentId, request, memberAuth);
+
+        // then
+        assertThat(comment.getContent()).doesNotContain("<script>");
+        assertThat(comment.getContent()).contains("수정내용");
+    }
+
+    @Test
     void deleteComment_작성자불일치_NOT_AUTHOR_예외() {
         // given
         Long commentId = 30L;
