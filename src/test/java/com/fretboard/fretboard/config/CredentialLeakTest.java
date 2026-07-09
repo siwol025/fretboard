@@ -1,8 +1,11 @@
 package com.fretboard.fretboard.config;
 
+import com.fretboard.fretboard.global.config.S3Config;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Bean;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -77,6 +80,17 @@ class CredentialLeakTest {
                 .as(".gitignore에 'application-local.yml' 패턴이 포함되어야 합니다. " +
                     "현재 application-local.yml이 .gitignore에서 누락된 상태입니다.")
                 .isTrue();
+    }
+
+    @Test
+    void s3Config_s3Client빈_destroyMethod_close_설정() throws Exception {
+        Method method = S3Config.class.getMethod("s3Client");
+        Bean beanAnnotation = method.getAnnotation(Bean.class);
+        assertThat(beanAnnotation).isNotNull();
+        assertThat(beanAnnotation.destroyMethod())
+                .as("S3Client 빈에 destroyMethod = \"close\" 가 설정되어야 합니다. " +
+                    "미설정 시 애플리케이션 종료 시 네트워크 커넥션이 누수됩니다.")
+                .isEqualTo("close");
     }
 
     private void assertSensitiveKeysUseEnvVars(String relativePath) throws IOException {

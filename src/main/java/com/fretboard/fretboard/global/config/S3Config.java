@@ -16,7 +16,7 @@ public class S3Config {
     @Value("${cloud.aws.credentials.secret-key}")
     private String secretAccessKey;
 
-    @Bean
+    @Bean(destroyMethod = "close")
     public S3Client s3Client() {
         AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
         return S3Client.builder()
