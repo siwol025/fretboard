@@ -37,6 +37,48 @@ class CredentialLeakTest {
         assertSensitiveKeysUseEnvVars("src/main/resources/application-test.yml", true);
     }
 
+    @Test
+    void boardInitializer_대용량_주석_블록_없음() throws IOException {
+        Path path = Path.of("src/main/java/com/fretboard/fretboard/global/BoardInitializer.java");
+        List<String> lines = Files.readAllLines(path);
+
+        int consecutiveCommentCount = 0;
+        int maxConsecutiveComments = 0;
+
+        for (String line : lines) {
+            String trimmed = line.stripLeading();
+            if (trimmed.startsWith("//")) {
+                consecutiveCommentCount++;
+                maxConsecutiveComments = Math.max(maxConsecutiveComments, consecutiveCommentCount);
+            } else {
+                consecutiveCommentCount = 0;
+            }
+        }
+
+        assertThat(maxConsecutiveComments)
+                .as("BoardInitializer.java에 연속 %d줄 주석 블록이 발견되었습니다. " +
+                    "10줄 이상의 연속 주석 블록은 제거되어야 합니다.", maxConsecutiveComments)
+                .isLessThan(10);
+    }
+
+    @Test
+    void gitignore_application_local_yml_제외_설정_확인() throws IOException {
+        Path gitignore = Path.of(".gitignore");
+        assertThat(Files.exists(gitignore))
+                .as(".gitignore 파일이 프로젝트 루트에 존재해야 합니다.")
+                .isTrue();
+
+        List<String> lines = Files.readAllLines(gitignore);
+        boolean hasLocalYml = lines.stream()
+                .map(String::trim)
+                .anyMatch(line -> line.contains("application-local.yml"));
+
+        assertThat(hasLocalYml)
+                .as(".gitignore에 'application-local.yml' 패턴이 포함되어야 합니다. " +
+                    "현재 application-local.yml이 .gitignore에서 누락된 상태입니다.")
+                .isTrue();
+    }
+
     private void assertSensitiveKeysUseEnvVars(String relativePath) throws IOException {
         assertSensitiveKeysUseEnvVars(relativePath, false);
     }
