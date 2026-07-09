@@ -4,9 +4,7 @@ import com.fretboard.fretboard.auth.encryptor.PasswordEncryptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MemberTest {
 
@@ -27,7 +25,7 @@ class MemberTest {
                 .build();
 
         // when & then
-        assertTrue(member.matchPassword(rawPassword, encryptor));
+        assertThat(member.matchPassword(rawPassword, encryptor)).isTrue();
     }
 
     @Test
@@ -45,7 +43,7 @@ class MemberTest {
                 .build();
 
         // when & then
-        assertFalse(member.matchPassword("wrongRawPwd", encryptor));
+        assertThat(member.matchPassword("wrongRawPwd", encryptor)).isFalse();
     }
 
     @Test
@@ -66,7 +64,7 @@ class MemberTest {
         member.changePassword(newEncoded);
 
         // then
-        assertEquals(newEncoded, member.getPassword());
+        assertThat(member.getPassword()).isEqualTo(newEncoded);
     }
 
     @Test
@@ -84,6 +82,6 @@ class MemberTest {
         member.changeNickname("newnick");
 
         // then
-        assertEquals("newnick", member.getNickname());
+        assertThat(member.getNickname()).isEqualTo("newnick");
     }
 }

@@ -3,7 +3,7 @@ package com.fretboard.fretboard.board.domain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class BoardTest {
 
@@ -22,9 +22,9 @@ class BoardTest {
         board.update("새 제목", "새 설명", "new-slug", BoardType.NON_WRITABLE);
 
         // then
-        assertEquals("새 제목", board.getTitle());
-        assertEquals("새 설명", board.getDescription());
-        assertEquals("new-slug", board.getSlug());
-        assertEquals(BoardType.NON_WRITABLE, board.getBoardType());
+        assertThat(board.getTitle()).isEqualTo("새 제목");
+        assertThat(board.getDescription()).isEqualTo("새 설명");
+        assertThat(board.getSlug()).isEqualTo("new-slug");
+        assertThat(board.getBoardType()).isEqualTo(BoardType.NON_WRITABLE);
     }
 }

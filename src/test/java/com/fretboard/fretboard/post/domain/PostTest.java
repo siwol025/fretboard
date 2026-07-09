@@ -7,7 +7,7 @@ import com.fretboard.fretboard.member.domain.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PostTest {
 
@@ -44,7 +44,7 @@ class PostTest {
         post.edit("새 제목", "새 내용");
 
         // then
-        assertEquals("새 제목", post.getTitle());
-        assertEquals("새 내용", post.getContent());
+        assertThat(post.getTitle()).isEqualTo("새 제목");
+        assertThat(post.getContent()).isEqualTo("새 내용");
     }
 }

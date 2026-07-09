@@ -5,7 +5,7 @@ import com.fretboard.fretboard.member.domain.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CommentTest {
 
@@ -28,6 +28,6 @@ class CommentTest {
         comment.updateContent("수정된 내용");
 
         // then
-        assertEquals("수정된 내용", comment.getContent());
+        assertThat(comment.getContent()).isEqualTo("수정된 내용");
     }
 }
