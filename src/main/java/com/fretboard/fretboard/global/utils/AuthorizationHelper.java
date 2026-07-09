@@ -1,4 +1,4 @@
-package com.fretboard.fretboard.global.helper;
+package com.fretboard.fretboard.global.utils;
 
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;

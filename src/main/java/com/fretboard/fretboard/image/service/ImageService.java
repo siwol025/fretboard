@@ -2,7 +2,7 @@ package com.fretboard.fretboard.image.service;
 
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
-import com.fretboard.fretboard.global.helper.HtmlSanitizer;
+import com.fretboard.fretboard.global.utils.HtmlSanitizer;
 import com.fretboard.fretboard.image.infrastructure.FileStorageProvider;
 import java.util.ArrayList;
 import java.util.List;

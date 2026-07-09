@@ -1,4 +1,4 @@
-package com.fretboard.fretboard.global.helper;
+package com.fretboard.fretboard.global.utils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;

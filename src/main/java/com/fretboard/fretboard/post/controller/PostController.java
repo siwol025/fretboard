@@ -9,6 +9,7 @@ import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
+import com.fretboard.fretboard.post.service.PostFeedService;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/posts")
 public class PostController {
     private final PostService postService;
+    private final PostFeedService postFeedService;
 
     @PostMapping
     public ResponseEntity<Void> createPost(@Valid @RequestBody PostNewRequest request,
@@ -44,7 +46,7 @@ public class PostController {
     @GetMapping(params = "boardId")
     public ResponseEntity<PostListResponse> getPostsByBoardId(@RequestParam Long boardId,
                                                               @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        PostListResponse response = postService.getPostsByBoardId(boardId, pageable);
+        PostListResponse response = postFeedService.getPostsByBoardId(boardId, pageable);
         return ResponseEntity.ok().body(response);
     }
 
@@ -52,7 +54,7 @@ public class PostController {
     public ResponseEntity<PostSearchListResponse> searchPosts(@RequestParam Long boardId,
                                                               @RequestParam String keyword,
                                                               @PageableDefault(size = 10) Pageable pageable) {
-        PostSearchListResponse response = postService.searchPosts(boardId, keyword, pageable);
+        PostSearchListResponse response = postFeedService.searchPosts(boardId, keyword, pageable);
         return ResponseEntity.ok().body(response);
     }
 
@@ -78,13 +80,13 @@ public class PostController {
 
     @GetMapping("/recent-posts")
     public ResponseEntity<List<RecentPostsPerBoardResponse>> getRecentPostsPerBoard() {
-        List<RecentPostsPerBoardResponse> response = postService.getRecentPosts();
+        List<RecentPostsPerBoardResponse> response = postFeedService.getRecentPosts();
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/best")
     public ResponseEntity<List<PostSummaryDto>> getBestPosts() {
-        List<PostSummaryDto> response = postService.getMostPosts();
+        List<PostSummaryDto> response = postFeedService.getMostPosts();
         return ResponseEntity.ok().body(response);
     }
 }

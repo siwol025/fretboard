@@ -9,6 +9,8 @@ import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
+import com.fretboard.fretboard.post.dto.response.PostListResponse;
+import com.fretboard.fretboard.post.service.PostFeedService;
 import com.fretboard.fretboard.post.service.PostService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,9 +25,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -54,6 +61,9 @@ class PostControllerTest {
 
     @MockBean
     PostService postService;
+
+    @MockBean
+    PostFeedService postFeedService;
 
     @Test
     @DisplayName("존재하는 게시글 조회 시 200 응답")
@@ -135,6 +145,31 @@ class PostControllerTest {
                         .content(requestBody)
                         .with(authenticatedMember("1")))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("게시판 목록 조회 시 PostFeedService를 통해 반환한다")
+    void getPostsByBoardId_게시판목록_PostFeedService_통해_반환() throws Exception {
+        // given
+        given(postFeedService.getPostsByBoardId(eq(1L), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then
+        mockMvc.perform(get("/api/posts").param("boardId", "1"))
+                .andExpect(status().isOk());
+        verify(postFeedService).getPostsByBoardId(eq(1L), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("인기글 조회 시 PostFeedService를 통해 반환한다")
+    void getBestPosts_인기글_PostFeedService_통해_반환() throws Exception {
+        // given
+        given(postFeedService.getMostPosts()).willReturn(List.of());
+
+        // when & then
+        mockMvc.perform(get("/api/posts/best"))
+                .andExpect(status().isOk());
+        verify(postFeedService).getMostPosts();
     }
 
     private RequestPostProcessor authenticatedMember(String memberId) {

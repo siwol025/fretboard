@@ -50,7 +50,7 @@ public class AwsS3Provider implements FileStorageProvider {
 
     private void uploadFile(MultipartFile file, String filePath) {
         try {
-            RequestBody requestBody = RequestBody.fromBytes(file.getBytes());
+            RequestBody requestBody = RequestBody.fromInputStream(file.getInputStream(), file.getSize());
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(filePath)
@@ -70,7 +70,7 @@ public class AwsS3Provider implements FileStorageProvider {
         }
 
         validateS3Path(imageUrl);
-        String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+        String fileName = extractFileName(imageUrl);
         String sourceKey = temporaryStoragePath + fileName;
         String destinationKey = imageStoragePath + fileName;
         copyFile(sourceKey, destinationKey);
@@ -104,7 +104,7 @@ public class AwsS3Provider implements FileStorageProvider {
 
     public void deleteImage(String imageUrl) {
         validateDeletablePath(imageUrl);
-        String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+        String fileName = extractFileName(imageUrl);
         String filePath = extractStoragePath(imageUrl) + fileName;
 
         try {
@@ -125,6 +125,10 @@ public class AwsS3Provider implements FileStorageProvider {
         if (!isTemporary && !isPermanent) {
             throw new FretBoardException(ExceptionType.S3_FORMAT_EXCEPTION);
         }
+    }
+
+    private String extractFileName(String imageUrl) {
+        return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
     }
 
     private String extractStoragePath(String imageUrl) {

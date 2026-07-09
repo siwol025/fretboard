@@ -6,7 +6,7 @@ import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
-import com.fretboard.fretboard.global.helper.AuthorizationHelper;
+import com.fretboard.fretboard.global.utils.AuthorizationHelper;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
 import org.junit.jupiter.api.DisplayName;
