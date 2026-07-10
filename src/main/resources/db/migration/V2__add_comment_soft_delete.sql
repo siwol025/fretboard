@@ -1,0 +1,1 @@
+ALTER TABLE comment ADD COLUMN deleted_at DATETIME NULL;

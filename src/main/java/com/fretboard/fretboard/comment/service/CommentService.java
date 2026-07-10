@@ -47,19 +47,25 @@ public class CommentService {
 
     @Transactional
     public void editComment(final Long id, final CommentRequest commentRequest, final MemberAuth memberAuth) {
-        Comment comment = commentRepository.findById(id)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
-
+        Comment comment = findActiveCommentOrThrow(id);
         authorizationHelper.validateIsAuthor(comment.getMember(), authorizationHelper.getMember(memberAuth));
         comment.updateContent(HtmlSanitizer.sanitize(commentRequest.content()));
     }
 
     @Transactional
     public void deleteComment(final Long id, final MemberAuth memberAuth) {
+        Comment comment = findActiveCommentOrThrow(id);
+        authorizationHelper.validateIsAuthor(comment.getMember(), authorizationHelper.getMember(memberAuth));
+        comment.softDelete();
+    }
+
+    private Comment findActiveCommentOrThrow(final Long id) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
-        authorizationHelper.validateIsAuthor(comment.getMember(), authorizationHelper.getMember(memberAuth));
-        commentRepository.delete(comment);
+        if (comment.isDeleted()) {
+            throw new FretBoardException(ExceptionType.COMMENT_NOT_FOUND);
+        }
+        return comment;
     }
 
 }

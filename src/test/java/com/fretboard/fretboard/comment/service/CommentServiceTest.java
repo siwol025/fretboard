@@ -2,6 +2,8 @@ package com.fretboard.fretboard.comment.service;
 
 import com.fretboard.fretboard.comment.domain.Comment;
 import com.fretboard.fretboard.comment.dto.request.CommentRequest;
+import com.fretboard.fretboard.comment.dto.response.CommentDetailResponse;
+import com.fretboard.fretboard.comment.dto.response.CommentResponse;
 import com.fretboard.fretboard.comment.repository.CommentRepository;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.exception.ExceptionType;
@@ -26,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -196,5 +199,78 @@ class CommentServiceTest {
                     FretBoardException fbe = (FretBoardException) ex;
                     assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.NOT_AUTHOR);
                 });
+    }
+
+    @Test
+    void 삭제된_부모_댓글도_스레드_유지를_위해_응답에_포함됨() {
+        // given
+        Long postId = 10L;
+        Comment deletedComment = Comment.parent("원본 내용", member, post);
+        deletedComment.softDelete();
+
+        given(commentRepository.findCommentsByPostIdWithMember(postId))
+                .willReturn(List.of(deletedComment));
+
+        // when
+        CommentResponse response = commentService.findComments(postId);
+
+        // then
+        assertThat(response.contents()).hasSize(1);
+        assertThat(response.contents().get(0).content())
+                .isEqualTo(CommentDetailResponse.DELETED_CONTENT);
+    }
+
+    @Test
+    void 이미_삭제된_댓글_수정_시_COMMENT_NOT_FOUND_예외() {
+        // given
+        Long commentId = 20L;
+        CommentRequest request = new CommentRequest("수정 시도 내용");
+
+        Comment comment = Comment.parent("원래 댓글 내용", member, post);
+        comment.softDelete();
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+        // when & then
+        assertThatThrownBy(() -> commentService.editComment(commentId, request, memberAuth))
+                .isInstanceOf(FretBoardException.class)
+                .satisfies(ex -> {
+                    FretBoardException fbe = (FretBoardException) ex;
+                    assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.COMMENT_NOT_FOUND);
+                });
+    }
+
+    @Test
+    void 이미_삭제된_댓글_재삭제_시_COMMENT_NOT_FOUND_예외() {
+        // given
+        Long commentId = 30L;
+        Comment comment = Comment.parent("댓글 내용", member, post);
+        comment.softDelete();
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+        // when & then
+        assertThatThrownBy(() -> commentService.deleteComment(commentId, memberAuth))
+                .isInstanceOf(FretBoardException.class)
+                .satisfies(ex -> {
+                    FretBoardException fbe = (FretBoardException) ex;
+                    assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.COMMENT_NOT_FOUND);
+                });
+    }
+
+    @Test
+    void 댓글_삭제_시_commentRepository_delete_대신_softDelete가_호출됨() {
+        // given
+        Long commentId = 30L;
+        Comment comment = Comment.parent("댓글 내용", member, post);
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+
+        // when
+        commentService.deleteComment(commentId, memberAuth);
+
+        // then
+        verify(commentRepository, never()).delete(any(Comment.class));
+        assertThat(comment.isDeleted()).isTrue();
     }
 }

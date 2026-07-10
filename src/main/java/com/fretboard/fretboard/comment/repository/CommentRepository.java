@@ -20,6 +20,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         from Post p
         left join p.comments c
         where p.id in :postIds
+          and (c is null or c.deletedAt is null)
         group by p.id
     """)
     List<PostCommentCountDto> countCommentsByPostIds(List<Long> postIds);
