@@ -15,8 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,7 +68,8 @@ class AuthorizationHelperTest {
                 .role(Role.USER)
                 .build();
 
-        assertDoesNotThrow(() -> authorizationHelper.validateIsAuthor(member, member));
+        assertThatCode(() -> authorizationHelper.validateIsAuthor(member, member))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -76,7 +77,8 @@ class AuthorizationHelperTest {
         Member author = new Member(1L, "author", "encoded_password", "authornick", Role.USER);
         Member loginMember = new Member(1L, "author", "encoded_password", "authornick", Role.USER);
 
-        assertDoesNotThrow(() -> authorizationHelper.validateIsAuthor(author, loginMember));
+        assertThatCode(() -> authorizationHelper.validateIsAuthor(author, loginMember))
+                .doesNotThrowAnyException();
     }
 
     @Test

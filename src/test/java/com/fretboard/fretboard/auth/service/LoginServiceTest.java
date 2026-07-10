@@ -21,7 +21,7 @@ import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
@@ -84,9 +84,9 @@ class LoginServiceTest {
         given(memberRepository.findByUsername("user")).willReturn(Optional.of(member));
 
         // when & then
-        FretBoardException exception = assertThrows(FretBoardException.class,
-                () -> loginService.login(new LoginRequest("user", "wrongPassword")));
-
-        assertThat(exception.getExceptionType()).isEqualTo(ExceptionType.INVALID_PASSWORD);
+        assertThatThrownBy(() -> loginService.login(new LoginRequest("user", "wrongPassword")))
+                .isInstanceOf(FretBoardException.class)
+                .satisfies(ex -> assertThat(((FretBoardException) ex).getExceptionType())
+                        .isEqualTo(ExceptionType.INVALID_PASSWORD));
     }
 }
