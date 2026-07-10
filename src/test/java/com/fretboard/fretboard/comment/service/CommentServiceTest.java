@@ -221,6 +221,43 @@ class CommentServiceTest {
     }
 
     @Test
+    void 이미_삭제된_댓글_수정_시_COMMENT_NOT_FOUND_예외() {
+        // given
+        Long commentId = 20L;
+        CommentRequest request = new CommentRequest("수정 시도 내용");
+
+        Comment comment = Comment.parent("원래 댓글 내용", member, post);
+        comment.softDelete();
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+        // when & then
+        assertThatThrownBy(() -> commentService.editComment(commentId, request, memberAuth))
+                .isInstanceOf(FretBoardException.class)
+                .satisfies(ex -> {
+                    FretBoardException fbe = (FretBoardException) ex;
+                    assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.COMMENT_NOT_FOUND);
+                });
+    }
+
+    @Test
+    void 이미_삭제된_댓글_재삭제_시_COMMENT_NOT_FOUND_예외() {
+        // given
+        Long commentId = 30L;
+        Comment comment = Comment.parent("댓글 내용", member, post);
+        comment.softDelete();
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+        // when & then
+        assertThatThrownBy(() -> commentService.deleteComment(commentId, memberAuth))
+                .isInstanceOf(FretBoardException.class)
+                .satisfies(ex -> {
+                    FretBoardException fbe = (FretBoardException) ex;
+                    assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.COMMENT_NOT_FOUND);
+                });
+    }
+
+    @Test
     void 댓글_삭제_시_commentRepository_delete_대신_softDelete가_호출됨() {
         // given
         Long commentId = 30L;
