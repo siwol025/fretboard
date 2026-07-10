@@ -30,4 +30,30 @@ class CommentTest {
         // then
         assertThat(comment.getContent()).isEqualTo("수정된 내용");
     }
+
+    @Test
+    @DisplayName("softDelete_호출_시_deletedAt_필드가_설정됨")
+    void softDelete_호출_시_deletedAt_필드가_설정됨() {
+        // given
+        Comment comment = Comment.parent("댓글 내용", testMember(), null);
+
+        // when
+        comment.softDelete();
+
+        // then
+        assertThat(comment.getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("소프트_딜리트된_댓글은_isDeleted_true를_반환함")
+    void 소프트_딜리트된_댓글은_isDeleted_true를_반환함() {
+        // given
+        Comment comment = Comment.parent("댓글 내용", testMember(), null);
+
+        // when
+        comment.softDelete();
+
+        // then
+        assertThat(comment.isDeleted()).isTrue();
+    }
 }

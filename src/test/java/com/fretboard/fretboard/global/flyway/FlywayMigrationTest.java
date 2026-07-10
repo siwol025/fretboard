@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlywayMigrationTest {
 
     @Test
-    void V1_마이그레이션이_H2_테스트_DB에_적용됨() {
+    void 모든_마이그레이션이_H2_테스트_DB에_적용됨() {
         DataSource dataSource = new EmbeddedDatabaseBuilder()
                 .setType(EmbeddedDatabaseType.H2)
                 .build();
@@ -31,7 +31,6 @@ class FlywayMigrationTest {
                 .toList();
 
         assertThat(appliedVersions)
-                .hasSize(1)
-                .containsExactly("1");
+                .contains("1", "2");
     }
 }

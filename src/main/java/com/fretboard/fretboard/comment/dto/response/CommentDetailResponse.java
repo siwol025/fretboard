@@ -12,10 +12,12 @@ public record CommentDetailResponse(
         String author,
         LocalDateTime createdAt
 ) {
+    public static final String DELETED_CONTENT = "삭제된 댓글입니다";
+
     public static CommentDetailResponse from(Comment comment) {
         return CommentDetailResponse.builder()
                 .id(comment.getId())
-                .content(comment.getContent())
+                .content(comment.isDeleted() ? DELETED_CONTENT : comment.getContent())
                 .authorId(comment.getMember().getId())
                 .author(comment.getMember().getNickname())
                 .createdAt(comment.getCreatedAt())

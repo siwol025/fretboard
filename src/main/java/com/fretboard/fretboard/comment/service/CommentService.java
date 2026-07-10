@@ -59,7 +59,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.COMMENT_NOT_FOUND));
         authorizationHelper.validateIsAuthor(comment.getMember(), authorizationHelper.getMember(memberAuth));
-        commentRepository.delete(comment);
+        comment.softDelete();
     }
 
 }
