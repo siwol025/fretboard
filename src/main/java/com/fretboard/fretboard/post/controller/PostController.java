@@ -10,6 +10,7 @@ import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.service.PostFeedService;
+import com.fretboard.fretboard.post.service.PostLikeService;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
     private final PostService postService;
     private final PostFeedService postFeedService;
+    private final PostLikeService postLikeService;
 
     @PostMapping
     public ResponseEntity<Void> createPost(@Valid @RequestBody PostNewRequest request,
@@ -59,8 +61,9 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long id) {
-        return ResponseEntity.ok().body(postService.getPostDetail(id));
+    public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long id,
+                                                      @LoginMember(required = false) MemberAuth memberAuth) {
+        return ResponseEntity.ok().body(postService.getPostDetail(id, memberAuth));
     }
 
     @PutMapping("/{id}")
@@ -75,6 +78,13 @@ public class PostController {
     public ResponseEntity<Void> removePost(@PathVariable Long id,
                                            @LoginMember MemberAuth memberAuth) {
         postService.deletePost(id, memberAuth);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<Void> toggleLike(@PathVariable Long id,
+                                           @LoginMember MemberAuth memberAuth) {
+        postLikeService.toggleLike(id, memberAuth);
         return ResponseEntity.noContent().build();
     }
 

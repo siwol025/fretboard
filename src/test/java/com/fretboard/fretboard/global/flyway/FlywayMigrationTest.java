@@ -31,6 +31,6 @@ class FlywayMigrationTest {
                 .toList();
 
         assertThat(appliedVersions)
-                .contains("1", "2");
+                .contains("1", "2", "3");
     }
 }

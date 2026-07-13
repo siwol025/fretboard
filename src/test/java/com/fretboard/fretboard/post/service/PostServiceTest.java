@@ -13,6 +13,8 @@ import com.fretboard.fretboard.member.domain.Role;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
+import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
+import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +55,9 @@ class PostServiceTest {
 
     @Mock
     private AuthorizationHelper authorizationHelper;
+
+    @Mock
+    private PostLikeRepository postLikeRepository;
 
     private Member member;
 
@@ -258,5 +263,41 @@ class PostServiceTest {
                     FretBoardException fbe = (FretBoardException) ex;
                     assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.NOT_AUTHOR);
                 });
+    }
+
+    @Test
+    void getPostDetail_likeCount와_isLiked_포함하여_반환됨() {
+        // given
+        Long postId = 1L;
+        MemberAuth memberAuth = new MemberAuth(10L);
+
+        Board board = Board.builder()
+                .title("자유게시판")
+                .description("자유롭게 작성하는 게시판")
+                .slug("free")
+                .boardType(BoardType.WRITABLE)
+                .build();
+        ReflectionTestUtils.setField(board, "id", 2L);
+
+        Post post = Post.builder()
+                .title("테스트 제목")
+                .content("테스트 본문")
+                .member(member)
+                .board(board)
+                .build();
+        ReflectionTestUtils.setField(post, "id", postId);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(viewCountService.hasViewCount(postId)).willReturn(true);
+        given(viewCountService.incrementViewCount(postId)).willReturn(5L);
+        given(postLikeRepository.countByPostId(postId)).willReturn(3L);
+        given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(true);
+
+        // when
+        PostDetailResponse response = postService.getPostDetail(postId, memberAuth);
+
+        // then
+        assertThat(response.likeCount()).isEqualTo(3L);
+        assertThat(response.isLiked()).isTrue();
     }
 }
