@@ -55,7 +55,7 @@ public class ViewCountService {
         }
     }
 
-    public void clearAllViewCounts() {
-        redisTemplate.delete(VIEW_COUNT_KEY);
+    public void deleteViewCountKeys(Set<String> keys) {
+        redisTemplate.opsForHash().delete(VIEW_COUNT_KEY, keys.toArray());
     }
 }

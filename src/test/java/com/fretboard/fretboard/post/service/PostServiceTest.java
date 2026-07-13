@@ -16,14 +16,15 @@ import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,7 +34,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
@@ -270,24 +270,9 @@ class PostServiceTest {
         // given
         Long postId = 1L;
         MemberAuth memberAuth = new MemberAuth(10L);
+        Post post = createPostWithId(postId);
 
-        Board board = Board.builder()
-                .title("자유게시판")
-                .description("자유롭게 작성하는 게시판")
-                .slug("free")
-                .boardType(BoardType.WRITABLE)
-                .build();
-        ReflectionTestUtils.setField(board, "id", 2L);
-
-        Post post = Post.builder()
-                .title("테스트 제목")
-                .content("테스트 본문")
-                .member(member)
-                .board(board)
-                .build();
-        ReflectionTestUtils.setField(post, "id", postId);
-
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(postRepository.findPostDetailById(postId)).willReturn(Optional.of(post));
         given(viewCountService.hasViewCount(postId)).willReturn(true);
         given(viewCountService.incrementViewCount(postId)).willReturn(5L);
         given(postLikeRepository.countByPostId(postId)).willReturn(3L);
@@ -299,5 +284,44 @@ class PostServiceTest {
         // then
         assertThat(response.likeCount()).isEqualTo(3L);
         assertThat(response.isLiked()).isTrue();
+    }
+
+    @Test
+    void getPostDetail_findById_대신_findPostDetailById_호출됨() {
+        // given
+        Long postId = 1L;
+        MemberAuth memberAuth = new MemberAuth(10L);
+        Post post = createPostWithId(postId);
+
+        given(postRepository.findPostDetailById(postId)).willReturn(Optional.of(post));
+        given(viewCountService.hasViewCount(postId)).willReturn(true);
+        given(viewCountService.incrementViewCount(postId)).willReturn(1L);
+        given(postLikeRepository.countByPostId(postId)).willReturn(0L);
+        given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(false);
+
+        // when
+        postService.getPostDetail(postId, memberAuth);
+
+        // then — findPostDetailById 가 호출되고 findById 는 호출되지 않아야 한다
+        verify(postRepository).findPostDetailById(postId);
+        verify(postRepository, org.mockito.Mockito.never()).findById(postId);
+    }
+
+    private Post createPostWithId(Long postId) {
+        Board board = Board.builder()
+                .title("자유게시판")
+                .description("자유롭게 작성하는 게시판")
+                .slug("free")
+                .boardType(BoardType.WRITABLE)
+                .build();
+
+        Post post = Post.builder()
+                .title("테스트 제목")
+                .content("테스트 본문")
+                .member(member)
+                .board(board)
+                .build();
+        ReflectionTestUtils.setField(post, "id", postId);
+        return post;
     }
 }
