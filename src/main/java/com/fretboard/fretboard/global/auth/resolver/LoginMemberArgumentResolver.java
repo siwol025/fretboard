@@ -29,6 +29,10 @@ public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolve
         Object memberId = request.getAttribute("memberId");
 
         if (memberId == null) {
+            boolean required = parameter.getParameterAnnotation(LoginMember.class).required();
+            if (!required) {
+                return null;
+            }
             throw new FretBoardException(ExceptionType.UNAUTHORIZED);
         }
 
