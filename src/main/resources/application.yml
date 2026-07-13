@@ -5,6 +5,11 @@ spring:
   profiles:
     active: dev
 
+  datasource:
+    hikari:
+      data-source-properties:
+        rewriteBatchedStatements: true
+
 #  jpa:
 #    properties:
 #      hibernate:
