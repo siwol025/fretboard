@@ -11,6 +11,7 @@ import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.service.PostFeedService;
+import com.fretboard.fretboard.post.service.PostLikeService;
 import com.fretboard.fretboard.post.service.PostService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -65,6 +67,9 @@ class PostControllerTest {
     @MockBean
     PostFeedService postFeedService;
 
+    @MockBean
+    PostLikeService postLikeService;
+
     @Test
     @DisplayName("존재하는 게시글 조회 시 200 응답")
     void getPost_존재하는_게시글_200_응답() throws Exception {
@@ -80,7 +85,7 @@ class PostControllerTest {
                 .boardId(1L)
                 .boardTitle("자유게시판")
                 .build();
-        given(postService.getPostDetail(1L)).willReturn(response);
+        given(postService.getPostDetail(eq(1L), any())).willReturn(response);
 
         // when & then
         mockMvc.perform(get("/api/posts/1"))
@@ -124,7 +129,7 @@ class PostControllerTest {
     @DisplayName("존재하지 않는 게시글 조회 시 404 응답")
     void getPost_존재하지_않는_게시글_404_응답() throws Exception {
         // given
-        given(postService.getPostDetail(999L)).willThrow(new FretBoardException(ExceptionType.POST_NOT_FOUND));
+        given(postService.getPostDetail(eq(999L), any())).willThrow(new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
         // when & then
         mockMvc.perform(get("/api/posts/999"))
@@ -170,6 +175,67 @@ class PostControllerTest {
         mockMvc.perform(get("/api/posts/best"))
                 .andExpect(status().isOk());
         verify(postFeedService).getMostPosts();
+    }
+
+    @Test
+    @DisplayName("POST 좋아요 토글 성공 시 204 응답")
+    void POST_좋아요_토글_성공_204반환() throws Exception {
+        // when & then
+        mockMvc.perform(post("/api/posts/1/like")
+                        .with(authenticatedMember("1")))
+                .andExpect(status().isNoContent());
+        verify(postLikeService).toggleLike(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("인증된 사용자가 게시글 조회 시 getPostDetail에 non-null MemberAuth가 전달된다")
+    void getPost_로그인_유저_memberAuth_전달됨() throws Exception {
+        // given
+        PostDetailResponse response = PostDetailResponse.builder()
+                .id(1L)
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .authorId(1L)
+                .author("작성자")
+                .createdAt(LocalDateTime.now())
+                .viewCount(0L)
+                .boardId(1L)
+                .boardTitle("자유게시판")
+                .build();
+        given(postService.getPostDetail(eq(1L), any())).willReturn(response);
+
+        // when
+        mockMvc.perform(get("/api/posts/1")
+                        .with(authenticatedMember("1")))
+                .andExpect(status().isOk());
+
+        // then — 로그인 사용자이므로 non-null MemberAuth가 전달된다
+        verify(postService).getPostDetail(eq(1L), argThat(auth -> auth != null));
+    }
+
+    @Test
+    @DisplayName("비인증 사용자가 게시글 조회 시 getPostDetail에 null이 전달된다")
+    void getPost_비로그인_유저_memberAuth_null_전달됨() throws Exception {
+        // given
+        PostDetailResponse response = PostDetailResponse.builder()
+                .id(1L)
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .authorId(1L)
+                .author("작성자")
+                .createdAt(LocalDateTime.now())
+                .viewCount(0L)
+                .boardId(1L)
+                .boardTitle("자유게시판")
+                .build();
+        given(postService.getPostDetail(eq(1L), any())).willReturn(response);
+
+        // when — 인증 없이 요청
+        mockMvc.perform(get("/api/posts/1"))
+                .andExpect(status().isOk());
+
+        // then — required=false이므로 null이 전달된다
+        verify(postService).getPostDetail(eq(1L), argThat(auth -> auth == null));
     }
 
     private RequestPostProcessor authenticatedMember(String memberId) {
