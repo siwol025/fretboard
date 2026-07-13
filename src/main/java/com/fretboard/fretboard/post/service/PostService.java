@@ -14,6 +14,7 @@ import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
+import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -31,6 +32,7 @@ public class PostService {
     private final BoardRepository boardRepository;
     private final ViewCountService viewCountService;
     private final AuthorizationHelper authorizationHelper;
+    private final PostLikeRepository postLikeRepository;
 
     @Transactional
     public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
@@ -73,7 +75,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostDetailResponse getPostDetail(final Long id) {
+    public PostDetailResponse getPostDetail(final Long id, final MemberAuth memberAuth) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
@@ -83,7 +85,10 @@ public class PostService {
 
         Long updatedViewCount = viewCountService.incrementViewCount(id);
 
-        return PostDetailResponse.of(post, updatedViewCount);
+        long likeCount = postLikeRepository.countByPostId(id);
+        boolean isLiked = memberAuth != null && postLikeRepository.existsByPostIdAndMemberId(id, memberAuth.memberId());
+
+        return PostDetailResponse.of(post, updatedViewCount, likeCount, isLiked);
     }
 
     public MyPostListResponse findMyPosts(final MemberAuth memberAuth, Pageable pageable) {

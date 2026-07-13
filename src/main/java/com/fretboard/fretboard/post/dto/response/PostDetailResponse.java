@@ -16,9 +16,11 @@ public record PostDetailResponse(
         Long viewCount,
         Long boardId,
         String boardTitle,
-        CommentResponse commentResponse
+        CommentResponse commentResponse,
+        Long likeCount,
+        Boolean isLiked
 ) {
-    public static PostDetailResponse of(Post post, Long viewCount) {
+    public static PostDetailResponse of(Post post, Long viewCount, Long likeCount, Boolean isLiked) {
         return PostDetailResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -30,6 +32,8 @@ public record PostDetailResponse(
                 .commentResponse(CommentResponse.createByComments(post.getComments()))
                 .boardId(post.getBoard().getId())
                 .boardTitle(post.getBoard().getTitle())
+                .likeCount(likeCount)
+                .isLiked(isLiked)
                 .build();
     }
 }
