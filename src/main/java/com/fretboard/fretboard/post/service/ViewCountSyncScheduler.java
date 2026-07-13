@@ -1,8 +1,11 @@
 package com.fretboard.fretboard.post.service;
 
-import com.fretboard.fretboard.post.repository.PostRepository;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,20 +14,30 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ViewCountSyncScheduler {
 
+    private static final String UPDATE_VIEW_COUNT_SQL = "UPDATE post SET view_count = ? WHERE id = ?";
+
     private final ViewCountService viewCountService;
-    private final PostRepository postRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Scheduled(fixedRate = 300000)
     @Transactional
     public void syncViewCountsToDatabase() {
         Map<Object, Object> counts = viewCountService.getAllViewCounts();
-
-        for (Map.Entry<Object, Object> entry : counts.entrySet()) {
-            Long postId = Long.parseLong(entry.getKey().toString());
-            Long viewCount = Long.parseLong(entry.getValue().toString());
-            postRepository.updateViewCount(postId, viewCount);
+        if (counts.isEmpty()) {
+            return;
         }
 
-        viewCountService.clearAllViewCounts();
+        List<Object[]> batchArgs = counts.entrySet().stream()
+                .map(entry -> new Object[]{
+                        Long.parseLong(entry.getValue().toString()),
+                        Long.parseLong(entry.getKey().toString())
+                })
+                .toList();
+        jdbcTemplate.batchUpdate(UPDATE_VIEW_COUNT_SQL, batchArgs);
+
+        Set<String> syncedKeys = counts.keySet().stream()
+                .map(Object::toString)
+                .collect(Collectors.toSet());
+        viewCountService.deleteViewCountKeys(syncedKeys);
     }
 }

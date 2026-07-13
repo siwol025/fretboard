@@ -76,7 +76,7 @@ public class PostService {
 
     @Transactional
     public PostDetailResponse getPostDetail(final Long id, final MemberAuth memberAuth) {
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findPostDetailById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
 
         if (!viewCountService.hasViewCount(id)) {

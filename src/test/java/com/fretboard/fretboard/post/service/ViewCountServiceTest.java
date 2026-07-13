@@ -92,4 +92,18 @@ class ViewCountServiceTest {
         // then
         assertThat(result).isTrue();
     }
+
+    @Test
+    void deleteViewCountKeys_지정된_키만_삭제된다() {
+        // given
+        Set<String> keys = Set.of("1", "2");
+        given(redisTemplate.opsForHash()).willReturn(hashOps);
+
+        // when
+        viewCountService.deleteViewCountKeys(keys);
+
+        // then
+        verify(hashOps).delete(org.mockito.ArgumentMatchers.eq(VIEW_COUNT_KEY),
+                org.mockito.ArgumentMatchers.any(Object[].class));
+    }
 }
