@@ -80,7 +80,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 SELECT p FROM Post p
                 JOIN FETCH p.member
                 JOIN FETCH p.board
-                LEFT JOIN FETCH p.comments
+                LEFT JOIN FETCH p.comments c
+                LEFT JOIN FETCH c.member
                 WHERE p.id = :id
             """)
     Optional<Post> findPostDetailById(@Param("id") Long id);
