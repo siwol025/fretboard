@@ -3,14 +3,18 @@ package com.fretboard.fretboard.post.service;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,8 +42,23 @@ class ViewCountSyncSchedulerTest {
 
         viewCountSyncScheduler.syncViewCountsToDatabase();
 
-        verify(jdbcTemplate).batchUpdate(eq("UPDATE post SET view_count = ? WHERE id = ?"), anyList());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Object[]>> batchArgsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(jdbcTemplate).batchUpdate(eq("UPDATE post SET view_count = ? WHERE id = ?"), batchArgsCaptor.capture());
         verify(viewCountService).deleteViewCountKeys(Set.of("1", "2"));
+
+        List<Object[]> batchArgs = batchArgsCaptor.getValue();
+        assertThat(batchArgs).hasSize(2);
+
+        // 각 원소는 {viewCount, postId} 순서여야 한다. postId(index 1)를 키로,
+        // viewCount(index 0)를 값으로 재구성하여 순서 무관하게 값·컬럼 순서를 검증한다.
+        Map<Object, Object> postIdToViewCount = new HashMap<>();
+        for (Object[] args : batchArgs) {
+            postIdToViewCount.put(args[1], args[0]);
+        }
+        assertThat(postIdToViewCount)
+                .containsEntry(1L, 100L)
+                .containsEntry(2L, 50L);
     }
 
     @Test
