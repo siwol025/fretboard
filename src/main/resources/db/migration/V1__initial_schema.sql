@@ -29,9 +29,9 @@ CREATE TABLE IF NOT EXISTS post (
     updated_at DATETIME
 );
 
-CREATE INDEX IF NOT EXISTS idx_post_board_id   ON post (board_id);
-CREATE INDEX IF NOT EXISTS idx_post_member_id  ON post (member_id);
-CREATE INDEX IF NOT EXISTS idx_post_created_at ON post (created_at);
+CREATE INDEX idx_post_board_id   ON post (board_id);
+CREATE INDEX idx_post_member_id  ON post (member_id);
+CREATE INDEX idx_post_created_at ON post (created_at);
 
 CREATE TABLE IF NOT EXISTS comment (
     id         BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -43,5 +43,5 @@ CREATE TABLE IF NOT EXISTS comment (
     updated_at DATETIME
 );
 
-CREATE INDEX IF NOT EXISTS idx_comment_post_id   ON comment (post_id);
-CREATE INDEX IF NOT EXISTS idx_comment_member_id ON comment (member_id);
+CREATE INDEX idx_comment_post_id   ON comment (post_id);
+CREATE INDEX idx_comment_member_id ON comment (member_id);
