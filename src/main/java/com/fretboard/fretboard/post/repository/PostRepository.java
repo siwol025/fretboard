@@ -3,8 +3,6 @@ package com.fretboard.fretboard.post.repository;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -19,24 +17,8 @@ import org.springframework.stereotype.Repository;
 public interface PostRepository extends JpaRepository<Post, Long> {
     default List<PostSummaryDto> findPostSummaryByBoardIdDeferred(Long boardId, int size, long offset) {
         return findPostSummaryByBoardIdDeferredRaw(boardId, size, offset).stream()
-                .map(row -> new PostSummaryDto(
-                        ((Number) row[0]).longValue(),
-                        (String) row[1],
-                        (String) row[2],
-                        toLocalDateTime(row[3]),
-                        ((Number) row[4]).longValue()
-                ))
+                .map(PostSummaryRowMapper::map)
                 .toList();
-    }
-
-    private static LocalDateTime toLocalDateTime(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Timestamp timestamp) {
-            return timestamp.toLocalDateTime();
-        }
-        return (LocalDateTime) value;
     }
 
     /*
