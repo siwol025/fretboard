@@ -3,6 +3,8 @@ package com.fretboard.fretboard.post.repository;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -15,15 +17,60 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    @Query(value = """
-                select new com.fretboard.fretboard.post.dto.PostSummaryDto(
-                    p.id, p.title, m.nickname, p.createdAt, p.viewCount
-                )
-                from Post p
-                join p.member m
-                where p.board.id = :boardId
-            """)
-    Page<PostSummaryDto> findPostSummaryByBoardId(Long boardId, Pageable pageable);
+    default List<PostSummaryDto> findPostSummaryByBoardIdDeferred(Long boardId, int size, long offset) {
+        return findPostSummaryByBoardIdDeferredRaw(boardId, size, offset).stream()
+                .map(row -> new PostSummaryDto(
+                        ((Number) row[0]).longValue(),
+                        (String) row[1],
+                        (String) row[2],
+                        toLocalDateTime(row[3]),
+                        ((Number) row[4]).longValue()
+                ))
+                .toList();
+    }
+
+    private static LocalDateTime toLocalDateTime(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Timestamp timestamp) {
+            return timestamp.toLocalDateTime();
+        }
+        return (LocalDateTime) value;
+    }
+
+    /*
+     * Deferred Join: 내부 서브쿼리(ip)에서 board_id 인덱스로 id 페이지만 먼저 추린 뒤
+     * 바깥에서 본문 컬럼을 조인해 대량 오프셋의 커버링 비용을 줄인다.
+     * 파생 테이블 서브쿼리에 LIMIT/OFFSET 을 둔다 — MySQL 은 IN(...LIMIT) 형태를 지원하지 않으므로
+     * (ERROR 1235) 반드시 FROM 절 파생 테이블 JOIN 으로 작성해야 한다. H2 는 양쪽 다 허용.
+     * ORDER BY 는 서브쿼리(페이징 대상 선택)와 외부 쿼리(최종 정렬) 양쪽 모두 필수다 —
+     * 파생 테이블 JOIN 은 순서를 보장하지 않으므로 외부 ORDER BY 를 제거하면 정렬이 깨진다.
+     * created_at 동률 시 id DESC 타이브레이커로 페이지 경계의 중복/누락을 방지한다.
+     */
+    @Query(
+            value = """
+                SELECT p.id, p.title, m.nickname, p.created_at, p.view_count
+                FROM post p
+                JOIN (
+                    SELECT ip.id
+                    FROM post ip
+                    WHERE ip.board_id = :boardId
+                    ORDER BY ip.created_at DESC, ip.id DESC
+                    LIMIT :size OFFSET :offset
+                ) sub ON sub.id = p.id
+                JOIN member m ON m.id = p.member_id
+                ORDER BY p.created_at DESC, p.id DESC
+                """,
+            nativeQuery = true
+    )
+    List<Object[]> findPostSummaryByBoardIdDeferredRaw(
+            @Param("boardId") Long boardId,
+            @Param("size") int size,
+            @Param("offset") long offset
+    );
+
+    long countByBoardId(Long boardId);
 
     @Query(
             value = """

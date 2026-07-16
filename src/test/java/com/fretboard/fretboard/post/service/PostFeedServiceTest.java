@@ -23,9 +23,12 @@ import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class PostFeedServiceTest {
@@ -52,9 +55,10 @@ class PostFeedServiceTest {
         PostSummaryDto postSummaryDto = new PostSummaryDto(
                 10L, "테스트 제목", "작성자", LocalDateTime.now(), 5L
         );
-        Page<PostSummaryDto> postPage = new PageImpl<>(List.of(postSummaryDto), pageable, 1);
 
-        given(postRepository.findPostSummaryByBoardId(boardId, pageable)).willReturn(postPage);
+        given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
+                .willReturn(List.of(postSummaryDto));
+        given(postRepository.countByBoardId(boardId)).willReturn(1L);
         given(commentRepository.countCommentsByPostIds(List.of(10L)))
                 .willReturn(List.of(new PostCommentCountDto(10L, 3L)));
 
@@ -66,6 +70,58 @@ class PostFeedServiceTest {
         assertThat(result.posts()).hasSize(1);
         assertThat(result.posts().get(0).id()).isEqualTo(10L);
         assertThat(result.posts().get(0).commentCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("getPostsByBoardId — Deferred Join 조회 메서드가 호출된다")
+    void getPostsByBoardId_Deferred_Join_조회_호출됨() {
+        // given
+        Long boardId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSummaryDto postSummaryDto = new PostSummaryDto(
+                10L, "테스트 제목", "작성자", LocalDateTime.now(), 5L
+        );
+
+        given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
+                .willReturn(List.of(postSummaryDto));
+        given(postRepository.countByBoardId(boardId)).willReturn(1L);
+        given(commentRepository.countCommentsByPostIds(List.of(10L)))
+                .willReturn(List.of(new PostCommentCountDto(10L, 3L)));
+
+        // when
+        postFeedService.getPostsByBoardId(boardId, pageable);
+
+        // then
+        verify(postRepository).findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong());
+    }
+
+    @Test
+    @DisplayName("getPostsByBoardId — buildCommentCountMap 재사용으로 commentCount 가 채워진다")
+    void getPostsByBoardId_댓글수_포함_응답_구성() {
+        // given
+        Long boardId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSummaryDto postSummaryDto = new PostSummaryDto(
+                10L, "테스트 제목", "작성자", LocalDateTime.now(), 5L
+        );
+
+        given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
+                .willReturn(List.of(postSummaryDto));
+        given(postRepository.countByBoardId(boardId)).willReturn(1L);
+        given(commentRepository.countCommentsByPostIds(List.of(10L)))
+                .willReturn(List.of(new PostCommentCountDto(10L, 3L)));
+
+        // when
+        PostListResponse result = postFeedService.getPostsByBoardId(boardId, pageable);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.posts()).hasSize(1);
+        assertThat(result.posts().get(0).id()).isEqualTo(10L);
+        assertThat(result.posts().get(0).commentCount()).isEqualTo(3L);
+        assertThat(result.totalElements()).isEqualTo(1L);
     }
 
     @Test

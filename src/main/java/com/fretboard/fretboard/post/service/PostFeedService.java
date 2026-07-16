@@ -35,16 +35,19 @@ public class PostFeedService {
     private final ViewCountService viewCountService;
 
     public PostListResponse getPostsByBoardId(final Long boardId, Pageable pageable) {
-        Page<PostSummaryDto> posts = postRepository.findPostSummaryByBoardId(boardId, pageable);
+        long offset = (long) pageable.getPageNumber() * pageable.getPageSize();
+        List<PostSummaryDto> posts = postRepository.findPostSummaryByBoardIdDeferred(
+                boardId, pageable.getPageSize(), offset);
+        long totalElements = postRepository.countByBoardId(boardId);
 
-        List<Long> postIds = posts.getContent().stream()
+        List<Long> postIds = posts.stream()
                 .map(PostSummaryDto::id)
                 .toList();
 
         Map<Long, Long> commentCountMap = buildCommentCountMap(postIds);
 
         Page<PostWithCommentCountDto> resultPage = new PageImpl<>(
-                posts.getContent().stream()
+                posts.stream()
                         .map(post -> new PostWithCommentCountDto(
                                 post.id(),
                                 post.title(),
@@ -54,7 +57,7 @@ public class PostFeedService {
                                 commentCountMap.getOrDefault(post.id(), 0L)
                         )).toList(),
                 pageable,
-                posts.getTotalElements()
+                totalElements
         );
 
         return PostListResponse.of(resultPage);
