@@ -1,7 +1,5 @@
 package com.fretboard.fretboard.post.service;
 
-import com.fretboard.fretboard.comment.dto.PostCommentCountDto;
-import com.fretboard.fretboard.comment.repository.CommentRepository;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
@@ -10,6 +8,7 @@ import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,9 +22,12 @@ import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class PostFeedServiceTest {
@@ -34,7 +36,7 @@ class PostFeedServiceTest {
     private PostRepository postRepository;
 
     @Mock
-    private CommentRepository commentRepository;
+    private CommentCountLoader commentCountLoader;
 
     @Mock
     private ViewCountService viewCountService;
@@ -52,11 +54,12 @@ class PostFeedServiceTest {
         PostSummaryDto postSummaryDto = new PostSummaryDto(
                 10L, "테스트 제목", "작성자", LocalDateTime.now(), 5L
         );
-        Page<PostSummaryDto> postPage = new PageImpl<>(List.of(postSummaryDto), pageable, 1);
 
-        given(postRepository.findPostSummaryByBoardId(boardId, pageable)).willReturn(postPage);
-        given(commentRepository.countCommentsByPostIds(List.of(10L)))
-                .willReturn(List.of(new PostCommentCountDto(10L, 3L)));
+        given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
+                .willReturn(List.of(postSummaryDto));
+        given(postRepository.countByBoardId(boardId)).willReturn(1L);
+        given(commentCountLoader.load(List.of(10L)))
+                .willReturn(Map.of(10L, 3L));
 
         // when
         PostListResponse result = postFeedService.getPostsByBoardId(boardId, pageable);
@@ -66,6 +69,58 @@ class PostFeedServiceTest {
         assertThat(result.posts()).hasSize(1);
         assertThat(result.posts().get(0).id()).isEqualTo(10L);
         assertThat(result.posts().get(0).commentCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("getPostsByBoardId — Deferred Join 조회 메서드가 호출된다")
+    void getPostsByBoardId_Deferred_Join_조회_호출됨() {
+        // given
+        Long boardId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSummaryDto postSummaryDto = new PostSummaryDto(
+                10L, "테스트 제목", "작성자", LocalDateTime.now(), 5L
+        );
+
+        given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
+                .willReturn(List.of(postSummaryDto));
+        given(postRepository.countByBoardId(boardId)).willReturn(1L);
+        given(commentCountLoader.load(List.of(10L)))
+                .willReturn(Map.of(10L, 3L));
+
+        // when
+        postFeedService.getPostsByBoardId(boardId, pageable);
+
+        // then
+        verify(postRepository).findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong());
+    }
+
+    @Test
+    @DisplayName("getPostsByBoardId — buildCommentCountMap 재사용으로 commentCount 가 채워진다")
+    void getPostsByBoardId_댓글수_포함_응답_구성() {
+        // given
+        Long boardId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        PostSummaryDto postSummaryDto = new PostSummaryDto(
+                10L, "테스트 제목", "작성자", LocalDateTime.now(), 5L
+        );
+
+        given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
+                .willReturn(List.of(postSummaryDto));
+        given(postRepository.countByBoardId(boardId)).willReturn(1L);
+        given(commentCountLoader.load(List.of(10L)))
+                .willReturn(Map.of(10L, 3L));
+
+        // when
+        PostListResponse result = postFeedService.getPostsByBoardId(boardId, pageable);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.posts()).hasSize(1);
+        assertThat(result.posts().get(0).id()).isEqualTo(10L);
+        assertThat(result.posts().get(0).commentCount()).isEqualTo(3L);
+        assertThat(result.totalElements()).isEqualTo(1L);
     }
 
     @Test
@@ -88,8 +143,8 @@ class PostFeedServiceTest {
         Page<PostSearchResultProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
         given(postRepository.searchByBoardIdAndKeyword(eq(boardId), eq(keyword), any(PageRequest.class)))
                 .willReturn(projectionPage);
-        given(commentRepository.countCommentsByPostIds(List.of(20L)))
-                .willReturn(List.of(new PostCommentCountDto(20L, 5L)));
+        given(commentCountLoader.load(List.of(20L)))
+                .willReturn(Map.of(20L, 5L));
 
         // when
         PostSearchListResponse result = postFeedService.searchPosts(boardId, keyword, pageable);

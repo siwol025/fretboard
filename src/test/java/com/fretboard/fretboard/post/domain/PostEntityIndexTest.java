@@ -14,27 +14,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PostEntityIndexTest {
 
     @Test
-    @DisplayName("Post_board_id_인덱스_선언됨")
-    void Post_board_id_인덱스_선언됨() {
+    @DisplayName("Post_커버링_복합_인덱스_선언됨")
+    void Post_커버링_복합_인덱스_선언됨() {
         Table table = Post.class.getAnnotation(Table.class);
         assertThat(table)
                 .as("Post 엔티티에 @Table 어노테이션이 없습니다.")
                 .isNotNull();
 
-        Set<String> indexedColumns = Arrays.stream(table.indexes())
+        Set<String> indexColumnLists = Arrays.stream(table.indexes())
                 .map(Index::columnList)
                 .collect(Collectors.toSet());
 
-        assertThat(indexedColumns)
-                .as("board_id 인덱스가 선언되어 있지 않습니다. 실제 인덱스: %s", indexedColumns)
-                .contains("board_id");
+        assertThat(indexColumnLists)
+                .as("게시판 목록 커버링 복합 인덱스(board_id, created_at, id)가 선언되어야 한다. 실제: %s", indexColumnLists)
+                .contains("board_id, created_at, id");
 
-        assertThat(indexedColumns)
-                .as("member_id 인덱스가 선언되어 있지 않습니다. 실제 인덱스: %s", indexedColumns)
-                .contains("member_id");
-
-        assertThat(indexedColumns)
-                .as("created_at 인덱스가 선언되어 있지 않습니다. 실제 인덱스: %s", indexedColumns)
-                .contains("created_at");
+        assertThat(indexColumnLists)
+                .as("내 게시글 커버링 복합 인덱스(member_id, created_at, id)가 선언되어야 한다. 실제: %s", indexColumnLists)
+                .contains("member_id, created_at, id");
     }
 }
