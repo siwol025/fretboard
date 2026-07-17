@@ -1,7 +1,5 @@
 package com.fretboard.fretboard.post.service;
 
-import com.fretboard.fretboard.comment.dto.PostCommentCountDto;
-import com.fretboard.fretboard.comment.repository.CommentRepository;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
@@ -10,6 +8,7 @@ import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +36,7 @@ class PostFeedServiceTest {
     private PostRepository postRepository;
 
     @Mock
-    private CommentRepository commentRepository;
+    private CommentCountLoader commentCountLoader;
 
     @Mock
     private ViewCountService viewCountService;
@@ -59,8 +58,8 @@ class PostFeedServiceTest {
         given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
                 .willReturn(List.of(postSummaryDto));
         given(postRepository.countByBoardId(boardId)).willReturn(1L);
-        given(commentRepository.countCommentsByPostIds(List.of(10L)))
-                .willReturn(List.of(new PostCommentCountDto(10L, 3L)));
+        given(commentCountLoader.load(List.of(10L)))
+                .willReturn(Map.of(10L, 3L));
 
         // when
         PostListResponse result = postFeedService.getPostsByBoardId(boardId, pageable);
@@ -86,8 +85,8 @@ class PostFeedServiceTest {
         given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
                 .willReturn(List.of(postSummaryDto));
         given(postRepository.countByBoardId(boardId)).willReturn(1L);
-        given(commentRepository.countCommentsByPostIds(List.of(10L)))
-                .willReturn(List.of(new PostCommentCountDto(10L, 3L)));
+        given(commentCountLoader.load(List.of(10L)))
+                .willReturn(Map.of(10L, 3L));
 
         // when
         postFeedService.getPostsByBoardId(boardId, pageable);
@@ -110,8 +109,8 @@ class PostFeedServiceTest {
         given(postRepository.findPostSummaryByBoardIdDeferred(eq(boardId), anyInt(), anyLong()))
                 .willReturn(List.of(postSummaryDto));
         given(postRepository.countByBoardId(boardId)).willReturn(1L);
-        given(commentRepository.countCommentsByPostIds(List.of(10L)))
-                .willReturn(List.of(new PostCommentCountDto(10L, 3L)));
+        given(commentCountLoader.load(List.of(10L)))
+                .willReturn(Map.of(10L, 3L));
 
         // when
         PostListResponse result = postFeedService.getPostsByBoardId(boardId, pageable);
@@ -144,8 +143,8 @@ class PostFeedServiceTest {
         Page<PostSearchResultProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
         given(postRepository.searchByBoardIdAndKeyword(eq(boardId), eq(keyword), any(PageRequest.class)))
                 .willReturn(projectionPage);
-        given(commentRepository.countCommentsByPostIds(List.of(20L)))
-                .willReturn(List.of(new PostCommentCountDto(20L, 5L)));
+        given(commentCountLoader.load(List.of(20L)))
+                .willReturn(Map.of(20L, 5L));
 
         // when
         PostSearchListResponse result = postFeedService.searchPosts(boardId, keyword, pageable);

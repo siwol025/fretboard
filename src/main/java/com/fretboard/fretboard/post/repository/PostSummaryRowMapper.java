@@ -1,8 +1,6 @@
 package com.fretboard.fretboard.post.repository;
 
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 /**
  * Deferred Join native query 의 {@code Object[]} 결과 행을 {@link PostSummaryDto} 로 변환한다.
@@ -21,18 +19,8 @@ final class PostSummaryRowMapper {
                 ((Number) row[0]).longValue(),
                 (String) row[1],
                 (String) row[2],
-                toLocalDateTime(row[3]),
+                NativeRowMappers.toLocalDateTime(row[3]),
                 ((Number) row[4]).longValue()
         );
-    }
-
-    private static LocalDateTime toLocalDateTime(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Timestamp timestamp) {
-            return timestamp.toLocalDateTime();
-        }
-        return (LocalDateTime) value;
     }
 }

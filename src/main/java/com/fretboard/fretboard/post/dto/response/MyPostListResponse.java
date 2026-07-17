@@ -1,6 +1,5 @@
 package com.fretboard.fretboard.post.dto.response;
 
-import com.fretboard.fretboard.post.domain.Post;
 import java.util.List;
 import org.springframework.data.domain.Page;
 
@@ -12,13 +11,9 @@ public record MyPostListResponse(
         boolean isFirst,
         boolean isLast
 ) {
-    public static MyPostListResponse of(Page<Post> page) {
-        List<PostSummaryResponse> content = page.getContent().stream()
-                .map(PostSummaryResponse::of)
-                .toList();
-
+    public static MyPostListResponse of(Page<PostSummaryResponse> page) {
         return new MyPostListResponse(
-                content,
+                page.getContent(),
                 page.getNumber(),
                 page.getTotalPages(),
                 page.getTotalElements(),

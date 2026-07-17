@@ -10,15 +10,20 @@ import com.fretboard.fretboard.global.utils.AuthorizationHelper;
 import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.MyPostSummaryDto;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
+import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
 import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +38,7 @@ public class PostService {
     private final ViewCountService viewCountService;
     private final AuthorizationHelper authorizationHelper;
     private final PostLikeRepository postLikeRepository;
+    private final CommentCountLoader commentCountLoader;
 
     @Transactional
     public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
@@ -92,8 +98,32 @@ public class PostService {
     }
 
     public MyPostListResponse findMyPosts(final MemberAuth memberAuth, Pageable pageable) {
-        Page<Post> posts = postRepository.findByMemberId(memberAuth.memberId(), pageable);
-        return MyPostListResponse.of(posts);
+        Long memberId = memberAuth.memberId();
+        int size = pageable.getPageSize();
+        long offset = (long) pageable.getPageNumber() * size;
+
+        List<MyPostSummaryDto> rows = postRepository.findMyPostSummaryDeferred(memberId, size, offset);
+        long total = postRepository.countByMemberId(memberId);
+
+        List<Long> postIds = rows.stream()
+                .map(MyPostSummaryDto::id)
+                .toList();
+        Map<Long, Long> commentCountMap = commentCountLoader.load(postIds);
+
+        List<PostSummaryResponse> content = rows.stream()
+                .map(row -> PostSummaryResponse.builder()
+                        .id(row.id())
+                        .title(row.title())
+                        .author(row.author())
+                        .createdAt(row.createdAt())
+                        .viewCount(row.viewCount())
+                        .boardId(row.boardId())
+                        .boardTitle(row.boardTitle())
+                        .commentCount(commentCountMap.getOrDefault(row.id(), 0L).intValue())
+                        .build())
+                .toList();
+
+        return MyPostListResponse.of(new PageImpl<>(content, pageable, total));
     }
 
     private Board getBoard(final Long boardId) {

@@ -11,12 +11,20 @@ import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
 import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.MyPostSummaryDto;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
+import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
+import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
 import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,11 +36,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,6 +69,9 @@ class PostServiceTest {
 
     @Mock
     private PostLikeRepository postLikeRepository;
+
+    @Mock
+    private CommentCountLoader commentCountLoader;
 
     private Member member;
 
@@ -305,6 +319,49 @@ class PostServiceTest {
         // then — findPostDetailById 가 호출되고 findById 는 호출되지 않아야 한다
         verify(postRepository).findPostDetailById(postId);
         verify(postRepository, org.mockito.Mockito.never()).findById(postId);
+    }
+
+    @Test
+    void findMyPosts_Deferred_Join_호출_및_배치_댓글수_포함() {
+        // given
+        Long memberId = 1L;
+        MemberAuth memberAuth = new MemberAuth(memberId);
+        Pageable pageable = PageRequest.of(0, 10);
+        LocalDateTime now = LocalDateTime.of(2026, 1, 1, 0, 0);
+
+        MyPostSummaryDto dto1 = new MyPostSummaryDto(
+                100L, "제목1", "nick1", now.plusMinutes(2), 5L, 10L, "게시판1");
+        MyPostSummaryDto dto2 = new MyPostSummaryDto(
+                101L, "제목2", "nick1", now.plusMinutes(1), 3L, 20L, "게시판2");
+
+        given(postRepository.findMyPostSummaryDeferred(memberId, 10, 0L))
+                .willReturn(List.of(dto1, dto2));
+        given(postRepository.countByMemberId(memberId)).willReturn(2L);
+        given(commentCountLoader.load(List.of(100L, 101L)))
+                .willReturn(Map.of(100L, 7L, 101L, 0L));
+
+        // when
+        MyPostListResponse response = postService.findMyPosts(memberAuth, pageable);
+
+        // then — deferred + countByMemberId 사용, 기존 findByMemberId(offset) 는 호출 안 됨
+        verify(postRepository).findMyPostSummaryDeferred(memberId, 10, 0L);
+        verify(postRepository).countByMemberId(memberId);
+        verify(postRepository, never()).findByMemberId(anyLong(), any(Pageable.class));
+
+        // commentCount 가 배치(CommentCountLoader.load)로 채워져야 한다
+        verify(commentCountLoader).load(List.of(100L, 101L));
+
+        assertThat(response.totalElements()).isEqualTo(2L);
+        assertThat(response.posts())
+                .extracting(
+                        PostSummaryResponse::id,
+                        PostSummaryResponse::boardId,
+                        PostSummaryResponse::boardTitle,
+                        PostSummaryResponse::commentCount)
+                .containsExactly(
+                        tuple(100L, 10L, "게시판1", 7),
+                        tuple(101L, 20L, "게시판2", 0)
+                );
     }
 
     private Post createPostWithId(Long postId) {

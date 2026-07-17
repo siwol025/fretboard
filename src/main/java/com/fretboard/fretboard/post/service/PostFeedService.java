@@ -1,7 +1,5 @@
 package com.fretboard.fretboard.post.service;
 
-import com.fretboard.fretboard.comment.dto.PostCommentCountDto;
-import com.fretboard.fretboard.comment.repository.CommentRepository;
 import com.fretboard.fretboard.global.common.CacheKey;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
@@ -31,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostFeedService {
 
     private final PostRepository postRepository;
-    private final CommentRepository commentRepository;
+    private final CommentCountLoader commentCountLoader;
     private final ViewCountService viewCountService;
 
     public PostListResponse getPostsByBoardId(final Long boardId, Pageable pageable) {
@@ -44,7 +42,7 @@ public class PostFeedService {
                 .map(PostSummaryDto::id)
                 .toList();
 
-        Map<Long, Long> commentCountMap = buildCommentCountMap(postIds);
+        Map<Long, Long> commentCountMap = commentCountLoader.load(postIds);
 
         Page<PostWithCommentCountDto> resultPage = new PageImpl<>(
                 posts.stream()
@@ -71,7 +69,7 @@ public class PostFeedService {
                 .map(PostSearchResultProjection::getId)
                 .toList();
 
-        Map<Long, Long> commentCountMap = buildCommentCountMap(postIds);
+        Map<Long, Long> commentCountMap = commentCountLoader.load(postIds);
 
         Page<PostSearchSummaryDto> resultPage = new PageImpl<>(
                 posts.getContent().stream()
@@ -112,11 +110,5 @@ public class PostFeedService {
     )
     public List<RecentPostsPerBoardResponse> getRecentPosts() {
         return RecentPostsPerBoardResponse.of(postRepository.findRecentPostsPerBoards());
-    }
-
-    private Map<Long, Long> buildCommentCountMap(List<Long> postIds) {
-        List<PostCommentCountDto> counts = commentRepository.countCommentsByPostIds(postIds);
-        return counts.stream()
-                .collect(Collectors.toMap(PostCommentCountDto::postId, PostCommentCountDto::commentCount));
     }
 }

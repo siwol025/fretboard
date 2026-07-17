@@ -1,6 +1,7 @@
 package com.fretboard.fretboard.post.repository;
 
 import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.MyPostSummaryDto;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import java.util.List;
@@ -53,6 +54,42 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     );
 
     long countByBoardId(Long boardId);
+
+    default List<MyPostSummaryDto> findMyPostSummaryDeferred(Long memberId, int size, long offset) {
+        return findMyPostSummaryDeferredRaw(memberId, size, offset).stream()
+                .map(MyPostSummaryRowMapper::map)
+                .toList();
+    }
+
+    /*
+     * findPostSummaryByBoardIdDeferredRaw 와 동일한 Deferred Join 전략
+     * (파생 테이블 LIMIT/OFFSET, 이중 ORDER BY 필수, id DESC 타이브레이커) — 위 주석 참고.
+     * 차이점: 서브쿼리 필터가 member_id 이고, 바깥에서 board 를 추가 조인해 b.id·b.title 을 함께 반환한다.
+     */
+    @Query(
+            value = """
+                SELECT p.id, p.title, m.nickname, p.created_at, p.view_count, b.id, b.title
+                FROM post p
+                JOIN (
+                    SELECT ip.id
+                    FROM post ip
+                    WHERE ip.member_id = :memberId
+                    ORDER BY ip.created_at DESC, ip.id DESC
+                    LIMIT :size OFFSET :offset
+                ) sub ON sub.id = p.id
+                JOIN member m ON m.id = p.member_id
+                JOIN board b ON b.id = p.board_id
+                ORDER BY p.created_at DESC, p.id DESC
+                """,
+            nativeQuery = true
+    )
+    List<Object[]> findMyPostSummaryDeferredRaw(
+            @Param("memberId") Long memberId,
+            @Param("size") int size,
+            @Param("offset") long offset
+    );
+
+    long countByMemberId(Long memberId);
 
     @Query(
             value = """
