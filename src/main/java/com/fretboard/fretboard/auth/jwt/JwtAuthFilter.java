@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     public static final String MEMBER_ID_ATTRIBUTE = "memberId";
