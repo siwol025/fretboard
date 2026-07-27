@@ -80,7 +80,6 @@ public class PostService {
         viewCountService.deleteViewCount(id);
     }
 
-    @Transactional
     public PostDetailResponse getPostDetail(final Long id, final MemberAuth memberAuth) {
         Post post = postRepository.findPostDetailById(id)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
