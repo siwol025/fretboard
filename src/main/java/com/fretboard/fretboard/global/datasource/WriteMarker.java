@@ -12,5 +12,11 @@ package com.fretboard.fretboard.global.datasource;
  */
 public interface WriteMarker {
 
+    /**
+     * Records a short-lived marker indicating the given user has just performed a write,
+     * so that subsequent read-only reads route to the primary datasource (read-your-writes).
+     */
+    void mark(Long userId);
+
     boolean hasRecentWrite(Long userId);
 }

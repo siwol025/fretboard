@@ -56,13 +56,13 @@ class DataSourceRoutingIntegrationTest extends AbstractPrimaryReplicaContainerTe
     }
 
     @Test
-    void 최근쓰기_사용자의_readOnly_읽기는_primary_노드() {
+    void 마킹없는_사용자의_readOnly_읽기는_replica_노드() {
         UserContextHolder.set(1L);
         transactionTemplate.setReadOnly(true);
 
         Long serverId = transactionTemplate.execute(status -> queryServerId());
 
-        assertThat(serverId).isEqualTo(PRIMARY_SERVER_ID);
+        assertThat(serverId).isEqualTo(REPLICA_SERVER_ID);
     }
 
     private Long queryServerId() {
