@@ -1,5 +1,6 @@
 package com.fretboard.fretboard.global.datasource;
 
+import com.fretboard.fretboard.auth.jwt.JwtAuthFilter;
 import com.fretboard.fretboard.auth.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -51,6 +52,9 @@ public class UserContextFilter extends OncePerRequestFilter {
         }
         try {
             String memberId = tokenProvider.decodeAccessToken(authorization.substring(BEARER_PREFIX.length()));
+            // Stash the decoded id so the later JwtAuthFilter can reuse it instead of
+            // decoding the same JWT a second time (single-decode across the filter chain).
+            request.setAttribute(JwtAuthFilter.DECODED_MEMBER_ID_CACHE_ATTRIBUTE, memberId);
             UserContextHolder.set(Long.valueOf(memberId));
         } catch (Exception ignored) {
             // best-effort: never reject the request when the token is missing/invalid
