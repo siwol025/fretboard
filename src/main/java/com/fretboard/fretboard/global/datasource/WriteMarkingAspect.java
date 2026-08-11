@@ -3,6 +3,7 @@ package com.fretboard.fretboard.global.datasource;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -17,8 +18,15 @@ public class WriteMarkingAspect {
 
     private final WriteMarker writeMarker;
 
+    @Value("${read-write-split.sticky-to-primary.enabled:true}")
+    private boolean stickyToPrimaryEnabled = true;
+
     public WriteMarkingAspect(WriteMarker writeMarker) {
         this.writeMarker = writeMarker;
+    }
+
+    void setStickyToPrimaryEnabled(boolean stickyToPrimaryEnabled) {
+        this.stickyToPrimaryEnabled = stickyToPrimaryEnabled;
     }
 
     @Around("execution(* com.fretboard.fretboard..service..*(..))")
@@ -28,6 +36,9 @@ public class WriteMarkingAspect {
     }
 
     void registerMarkingIfWrite() {
+        if (!stickyToPrimaryEnabled) {
+            return;
+        }
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             return;
         }

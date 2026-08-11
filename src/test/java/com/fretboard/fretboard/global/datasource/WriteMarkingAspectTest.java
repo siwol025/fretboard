@@ -129,4 +129,44 @@ class WriteMarkingAspectTest {
         // then — 동기화 미등록
         assertThat(TransactionSynchronizationManager.getSynchronizations()).isEmpty();
     }
+
+    @Test
+    @DisplayName("마킹 토글 플래그 기본값(true)이면 커밋 후 마킹한다")
+    void 플래그_기본값_true_면_커밋후_마킹함() {
+        // given — 플래그 기본 true + 쓰기 트랜잭션 활성 + 사용자 존재
+        aspect.setStickyToPrimaryEnabled(true);
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+        TransactionSynchronizationManager.setCurrentTransactionReadOnly(false);
+        UserContextHolder.set(USER_ID);
+
+        // when
+        aspect.registerMarkingIfWrite();
+
+        // then — 정확히 하나의 동기화가 등록된다
+        List<TransactionSynchronization> synchronizations =
+                TransactionSynchronizationManager.getSynchronizations();
+        assertThat(synchronizations).hasSize(1);
+
+        // when — 커밋 콜백 실행
+        synchronizations.get(0).afterCommit();
+
+        // then — 마킹 발생
+        verify(writeMarker).mark(USER_ID);
+    }
+
+    @Test
+    @DisplayName("마킹 토글 플래그가 false이면 커밋 후 마킹하지 않는다")
+    void 플래그_false_면_커밋후_마킹_안함() {
+        // given — 플래그 false + 쓰기 트랜잭션 활성 + 사용자 존재
+        aspect.setStickyToPrimaryEnabled(false);
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+        TransactionSynchronizationManager.setCurrentTransactionReadOnly(false);
+        UserContextHolder.set(USER_ID);
+
+        // when
+        aspect.registerMarkingIfWrite();
+
+        // then — 동기화 미등록(마킹 안 함)
+        assertThat(TransactionSynchronizationManager.getSynchronizations()).isEmpty();
+    }
 }
