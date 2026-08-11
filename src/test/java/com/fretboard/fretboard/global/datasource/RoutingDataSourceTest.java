@@ -2,6 +2,7 @@ package com.fretboard.fretboard.global.datasource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +23,7 @@ class RoutingDataSourceTest {
 
     private static final String PRIMARY = "primary";
     private static final String REPLICA = "replica";
+    private static final String ANALYTICS = "analytics";
     private static final Long USER_ID = 42L;
 
     @AfterEach
@@ -29,6 +31,7 @@ class RoutingDataSourceTest {
         TransactionSynchronizationManager.setCurrentTransactionReadOnly(false);
         TransactionSynchronizationManager.setActualTransactionActive(false);
         UserContextHolder.clear();
+        WorkloadContextHolder.clear();
     }
 
     private RoutingDataSource routingDataSourceWith(WriteMarker marker) {
@@ -150,5 +153,72 @@ class RoutingDataSourceTest {
 
         // then — 일관성은 저하되어도 읽기는 살아있게 fail-open
         assertThat(key).isEqualTo(REPLICA);
+    }
+
+    @Test
+    @DisplayName("읽기 전용 + 워크로드가 ANALYTICS 이면 analytics 로 라우팅한다")
+    void readOnly_ANALYTICS_analytics() {
+        // given — 읽기 전용 + 분석 워크로드
+        activeTransaction(true);
+        WorkloadContextHolder.set(ReadWorkload.ANALYTICS);
+        RoutingDataSource routingDataSource = routingDataSourceWith(mock(WriteMarker.class));
+
+        // when
+        Object key = routingDataSource.determineCurrentLookupKey();
+
+        // then
+        assertThat(key).isEqualTo(ANALYTICS);
+    }
+
+    @Test
+    @DisplayName("읽기 전용 + ANALYTICS 이면 사용자+최근쓰기 마킹이 있어도 마킹을 조회하지 않고 analytics 로 라우팅한다")
+    void readOnly_ANALYTICS_최근쓰기있어도_마킹무시하고_analytics() {
+        // given — 읽기 전용 + 분석 워크로드 + 사용자 존재 + 최근 쓰기 마킹 존재
+        activeTransaction(true);
+        WorkloadContextHolder.set(ReadWorkload.ANALYTICS);
+        UserContextHolder.set(USER_ID);
+        WriteMarker marker = mock(WriteMarker.class);
+        when(marker.hasRecentWrite(USER_ID)).thenReturn(true);
+        RoutingDataSource routingDataSource = routingDataSourceWith(marker);
+
+        // when
+        Object key = routingDataSource.determineCurrentLookupKey();
+
+        // then — analytics 로 조기 확정, 마킹 조회 자체를 하지 않음
+        assertThat(key).isEqualTo(ANALYTICS);
+        verifyNoInteractions(marker);
+    }
+
+    @Test
+    @DisplayName("읽기 전용 + SERVING(기본) + 마킹 없음이면 replica 로 라우팅한다")
+    void readOnly_SERVING_마킹없음_replica() {
+        // given — 읽기 전용 + 서빙 워크로드(기본) + 사용자 존재 + 최근 쓰기 없음
+        activeTransaction(true);
+        WorkloadContextHolder.set(ReadWorkload.SERVING);
+        UserContextHolder.set(USER_ID);
+        WriteMarker marker = mock(WriteMarker.class);
+        when(marker.hasRecentWrite(USER_ID)).thenReturn(false);
+        RoutingDataSource routingDataSource = routingDataSourceWith(marker);
+
+        // when
+        Object key = routingDataSource.determineCurrentLookupKey();
+
+        // then
+        assertThat(key).isEqualTo(REPLICA);
+    }
+
+    @Test
+    @DisplayName("워크로드가 ANALYTICS 여도 쓰기 트랜잭션이면 primary 로 라우팅한다")
+    void 비readOnly_ANALYTICS라도_primary() {
+        // given — 쓰기 트랜잭션 + 분석 워크로드
+        activeTransaction(false);
+        WorkloadContextHolder.set(ReadWorkload.ANALYTICS);
+        RoutingDataSource routingDataSource = routingDataSourceWith(mock(WriteMarker.class));
+
+        // when
+        Object key = routingDataSource.determineCurrentLookupKey();
+
+        // then
+        assertThat(key).isEqualTo(PRIMARY);
     }
 }

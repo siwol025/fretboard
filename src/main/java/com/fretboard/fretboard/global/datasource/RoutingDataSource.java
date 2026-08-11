@@ -7,8 +7,10 @@ import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Routes queries between the primary and replica datasources based on the current
- * transaction's read-only flag, the current user context, and recent-write marking.
+ * Routes queries across the primary, replica, and analytics datasources based on the current
+ * transaction's read-only flag, the workload class ({@link ReadWorkload}), the current user
+ * context, and recent-write marking. Analytics reads are decided early and skip marking (stale
+ * is acceptable); serving reads keep read-your-writes routing.
  */
 public class RoutingDataSource extends AbstractRoutingDataSource {
 
@@ -16,6 +18,7 @@ public class RoutingDataSource extends AbstractRoutingDataSource {
 
     public static final String PRIMARY = "primary";
     public static final String REPLICA = "replica";
+    public static final String ANALYTICS = "analytics";
 
     private final ObjectProvider<WriteMarker> writeMarkerProvider;
 
@@ -32,6 +35,10 @@ public class RoutingDataSource extends AbstractRoutingDataSource {
         // Write transaction → primary.
         if (!TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
             return PRIMARY;
+        }
+        // Read-only transaction: analytics workload → analytics (before any marker lookup).
+        if (WorkloadContextHolder.getWorkload() == ReadWorkload.ANALYTICS) {
+            return ANALYTICS;
         }
         // Read-only transaction: anonymous read → replica.
         Long userId = UserContextHolder.getUserId();
