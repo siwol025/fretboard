@@ -37,12 +37,7 @@ public class DataSourceConfig {
     @Bean
     @ConfigurationProperties("datasource.primary.hikari")
     public HikariDataSource primaryDataSource(DataSourceProperties primaryDataSourceProperties) {
-        HikariDataSource dataSource = primaryDataSourceProperties
-                .initializeDataSourceBuilder()
-                .type(HikariDataSource.class)
-                .build();
-        dataSource.setPoolName("primary");
-        return dataSource;
+        return buildPool(primaryDataSourceProperties, RoutingDataSource.PRIMARY);
     }
 
     @Bean
@@ -54,12 +49,7 @@ public class DataSourceConfig {
     @Bean
     @ConfigurationProperties("datasource.replica.hikari")
     public HikariDataSource replicaDataSource(DataSourceProperties replicaDataSourceProperties) {
-        HikariDataSource dataSource = replicaDataSourceProperties
-                .initializeDataSourceBuilder()
-                .type(HikariDataSource.class)
-                .build();
-        dataSource.setPoolName("replica");
-        return dataSource;
+        return buildPool(replicaDataSourceProperties, RoutingDataSource.REPLICA);
     }
 
     @Bean
@@ -71,11 +61,21 @@ public class DataSourceConfig {
     @Bean
     @ConfigurationProperties("datasource.analytics.hikari")
     public HikariDataSource analyticsDataSource(DataSourceProperties analyticsDataSourceProperties) {
-        HikariDataSource dataSource = analyticsDataSourceProperties
+        return buildPool(analyticsDataSourceProperties, RoutingDataSource.ANALYTICS);
+    }
+
+    /**
+     * {@link DataSourceProperties} 로부터 이름 붙은 {@link HikariDataSource} 를 조립한다.
+     * pool-name 은 라우팅 키 상수를 그대로 써(예: {@code hikaricp_connections_active{pool="analytics"}})
+     * 노드별 메트릭 식별과 라우팅 키를 일치시킨다. {@code @ConfigurationProperties("datasource.*.hikari")}
+     * 로 바인딩되는 hikari 속성(예: rewriteBatchedStatements)은 반환 후 후처리로 적용된다.
+     */
+    private HikariDataSource buildPool(DataSourceProperties properties, String poolName) {
+        HikariDataSource dataSource = properties
                 .initializeDataSourceBuilder()
                 .type(HikariDataSource.class)
                 .build();
-        dataSource.setPoolName("analytics");
+        dataSource.setPoolName(poolName);
         return dataSource;
     }
 
