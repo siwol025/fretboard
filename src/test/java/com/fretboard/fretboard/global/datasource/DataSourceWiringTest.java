@@ -34,5 +34,9 @@ class DataSourceWiringTest {
         assertThat(target)
                 .as("lazy proxy must wrap the RoutingDataSource")
                 .isInstanceOf(RoutingDataSource.class);
+
+        assertThat(((RoutingDataSource) target).getResolvedDataSources())
+                .as("routing must resolve all three workload targets")
+                .containsKeys(RoutingDataSource.PRIMARY, RoutingDataSource.REPLICA, RoutingDataSource.ANALYTICS);
     }
 }
