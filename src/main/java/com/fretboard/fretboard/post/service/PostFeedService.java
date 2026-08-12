@@ -1,6 +1,7 @@
 package com.fretboard.fretboard.post.service;
 
 import com.fretboard.fretboard.global.common.CacheKey;
+import com.fretboard.fretboard.global.datasource.Analytics;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
@@ -61,6 +62,7 @@ public class PostFeedService {
         return PostListResponse.of(resultPage);
     }
 
+    @Analytics
     public PostSearchListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
         Page<PostSearchResultProjection> posts = postRepository.searchByBoardIdAndKeyword(
                 boardId, keyword, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
@@ -90,6 +92,7 @@ public class PostFeedService {
         return PostSearchListResponse.of(resultPage);
     }
 
+    @Analytics
     public List<PostSummaryDto> getMostPosts() {
         List<Long> topPosts = viewCountService.getTopPosts(5);
         List<PostSummaryDto> posts = postRepository.findByPostIds(topPosts);
@@ -103,6 +106,7 @@ public class PostFeedService {
                 .toList();
     }
 
+    @Analytics
     @Cacheable(
             cacheNames = CacheKey.RECENT_POSTS,
             key = CacheKey.RECENT_POSTS_KEY,
