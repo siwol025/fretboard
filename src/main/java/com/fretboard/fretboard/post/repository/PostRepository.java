@@ -92,20 +92,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     long countByMemberId(Long memberId);
 
-    @Query(
-            value = """
-                SELECT p.*
-                FROM (
-                    SELECT p.*, ROW_NUMBER() OVER (PARTITION BY board_id ORDER BY p.created_at DESC) AS rn
-                    FROM post p
-                ) p
-                WHERE p.rn <= 5
-                ORDER BY p.board_id, p.rn
-            """,
-            nativeQuery = true
-    )
-    List<Post> findRecentPostsPerBoards();
-
     /*
      * 특정 board 의 최신 게시글 top-5 를 created_at DESC, id DESC 로 반환한다.
      * member/board 는 단일 연관(ManyToOne)이므로 join fetch + 행 제한을 함께 써도

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.datasource.ReadWorkload;
 import com.fretboard.fretboard.global.datasource.WorkloadContextHolder;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
@@ -51,6 +53,9 @@ class PostFeedRoutingTest {
 
     @MockBean
     private ViewCountService viewCountService;
+
+    @MockBean
+    private BoardRepository boardRepository;
 
     @MockBean
     private CommentCountLoader commentCountLoader;
@@ -109,7 +114,7 @@ class PostFeedRoutingTest {
     @Test
     void getRecentPosts_실행중_ANALYTICS_워크로드() {
         stubAlwaysMissCache();
-        when(postRepository.findRecentPostsPerBoards())
+        when(boardRepository.findAll(any(Sort.class)))
                 .thenAnswer(invocation -> {
                     capturedWorkload = WorkloadContextHolder.getWorkload();
                     return List.of();

@@ -1,9 +1,9 @@
 package com.fretboard.fretboard.post.dto.response;
 
+import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.post.domain.Post;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,24 +25,18 @@ public class RecentPostsPerBoardResponse {
         this.posts = posts;
     }
 
-    public static List<RecentPostsPerBoardResponse> of(List<Post> posts) {
-        return posts.stream()
-                .collect(Collectors.groupingBy(
-                        p -> new BoardKey(p.getBoard().getId(), p.getBoard().getTitle(), p.getBoard().getSlug()),
-                        LinkedHashMap::new,
-                        Collectors.mapping(
-                                PostSummaryResponse::of,
-                                Collectors.toList()
-                        )
-                ))
-                .entrySet().stream()
-                .map(entry -> RecentPostsPerBoardResponse.builder()
-                        .boardId(entry.getKey().getBoardId())
-                        .boardTitle(entry.getKey().getBoardTitle())
-                        .boardSlug(entry.getKey().getBoardSlug())
-                        .posts(entry.getValue())
-                        .build()
-                )
+    public static RecentPostsPerBoardResponse of(Board board, List<Post> posts, Map<Long, Long> commentCountMap) {
+        List<PostSummaryResponse> postSummaries = posts.stream()
+                .map(post -> PostSummaryResponse.of(
+                        post,
+                        commentCountMap.getOrDefault(post.getId(), 0L).intValue()))
                 .toList();
+
+        return RecentPostsPerBoardResponse.builder()
+                .boardId(board.getId())
+                .boardTitle(board.getTitle())
+                .boardSlug(board.getSlug())
+                .posts(postSummaries)
+                .build();
     }
 }

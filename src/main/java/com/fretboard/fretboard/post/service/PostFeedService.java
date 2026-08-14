@@ -1,7 +1,10 @@
 package com.fretboard.fretboard.post.service;
 
+import com.fretboard.fretboard.board.domain.Board;
+import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.common.CacheKey;
 import com.fretboard.fretboard.global.datasource.Analytics;
+import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
@@ -10,6 +13,7 @@ import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostFeedService {
 
     private final PostRepository postRepository;
+    private final BoardRepository boardRepository;
     private final CommentCountLoader commentCountLoader;
     private final ViewCountService viewCountService;
 
@@ -113,6 +119,26 @@ public class PostFeedService {
             cacheManager = "postCacheManager"
     )
     public List<RecentPostsPerBoardResponse> getRecentPosts() {
-        return RecentPostsPerBoardResponse.of(postRepository.findRecentPostsPerBoards());
+        List<Board> boards = boardRepository.findAll(Sort.by("id"));
+
+        Map<Board, List<Post>> postsByBoard = new LinkedHashMap<>();
+        for (Board board : boards) {
+            List<Post> posts = postRepository.findTop5ByBoardIdOrderByRecency(board.getId());
+            if (!posts.isEmpty()) {
+                postsByBoard.put(board, posts);
+            }
+        }
+
+        List<Long> postIds = postsByBoard.values().stream()
+                .flatMap(List::stream)
+                .map(Post::getId)
+                .toList();
+
+        Map<Long, Long> commentCountMap = commentCountLoader.load(postIds);
+
+        return postsByBoard.entrySet().stream()
+                .map(entry -> RecentPostsPerBoardResponse.of(
+                        entry.getKey(), entry.getValue(), commentCountMap))
+                .toList();
     }
 }
