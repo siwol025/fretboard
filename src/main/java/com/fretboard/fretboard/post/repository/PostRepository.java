@@ -7,6 +7,7 @@ import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -104,6 +105,24 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             nativeQuery = true
     )
     List<Post> findRecentPostsPerBoards();
+
+    /*
+     * 특정 board 의 최신 게시글 top-5 를 created_at DESC, id DESC 로 반환한다.
+     * member/board 는 단일 연관(ManyToOne)이므로 join fetch + 행 제한을 함께 써도
+     * in-memory paging 문제가 없다. 행 제한은 PageRequest.of(0, 5) 로 캡한다.
+     */
+    default List<Post> findTop5ByBoardIdOrderByRecency(Long boardId) {
+        return findTop5ByBoardIdOrderByRecency(boardId, PageRequest.of(0, 5));
+    }
+
+    @Query("""
+                SELECT p FROM Post p
+                JOIN FETCH p.member
+                JOIN FETCH p.board
+                WHERE p.board.id = :boardId
+                ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findTop5ByBoardIdOrderByRecency(@Param("boardId") Long boardId, Pageable pageable);
 
     @Query(
             value = """
