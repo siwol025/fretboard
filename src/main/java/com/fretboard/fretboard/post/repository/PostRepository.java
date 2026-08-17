@@ -17,34 +17,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    /*
-     * Pre-optimization offset: board_id 필터 + member JOIN 을 한 번에 수행하고
-     * 결과에 직접 LIMIT/OFFSET 을 적용한다 (deferred subquery 없음).
-     * ORDER BY created_at DESC, id DESC — deferred 방식과 동일한 정렬/타이브레이커.
-     */
-    default List<PostSummaryDto> findPostSummaryByBoardIdOffset(Long boardId, int size, long offset) {
-        return findPostSummaryByBoardIdOffsetRaw(boardId, size, offset).stream()
-                .map(PostSummaryRowMapper::map)
-                .toList();
-    }
-
-    @Query(
-            value = """
-                SELECT p.id, p.title, m.nickname, p.created_at, p.view_count
-                FROM post p
-                JOIN member m ON m.id = p.member_id
-                WHERE p.board_id = :boardId
-                ORDER BY p.created_at DESC, p.id DESC
-                LIMIT :size OFFSET :offset
-                """,
-            nativeQuery = true
-    )
-    List<Object[]> findPostSummaryByBoardIdOffsetRaw(
-            @Param("boardId") Long boardId,
-            @Param("size") int size,
-            @Param("offset") long offset
-    );
-
     default List<PostSummaryDto> findPostSummaryByBoardIdDeferred(Long boardId, int size, long offset) {
         return findPostSummaryByBoardIdDeferredRaw(boardId, size, offset).stream()
                 .map(PostSummaryRowMapper::map)

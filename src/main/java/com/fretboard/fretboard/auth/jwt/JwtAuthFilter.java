@@ -63,9 +63,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 new HttpRequestInfo(HttpMethod.GET, "/api/posts/**"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/boards"),
                 new HttpRequestInfo(HttpMethod.GET, "/api/boards/**"),
-                new HttpRequestInfo(HttpMethod.GET, "/actuator/prometheus"),
-                new HttpRequestInfo(HttpMethod.GET, "/api/_bench/posts"),
-                new HttpRequestInfo(HttpMethod.GET, "/api/_bench/**")
+                new HttpRequestInfo(HttpMethod.GET, "/actuator/prometheus")
         );
     }
 

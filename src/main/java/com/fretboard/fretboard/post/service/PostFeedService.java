@@ -68,35 +68,6 @@ public class PostFeedService {
         return PostListResponse.of(resultPage);
     }
 
-    public PostListResponse getPostsByBoardIdOffset(final Long boardId, Pageable pageable) {
-        long offset = (long) pageable.getPageNumber() * pageable.getPageSize();
-        List<PostSummaryDto> posts = postRepository.findPostSummaryByBoardIdOffset(
-                boardId, pageable.getPageSize(), offset);
-        long totalElements = postRepository.countByBoardId(boardId);
-
-        List<Long> postIds = posts.stream()
-                .map(PostSummaryDto::id)
-                .toList();
-
-        Map<Long, Long> commentCountMap = commentCountLoader.load(postIds);
-
-        Page<PostWithCommentCountDto> resultPage = new PageImpl<>(
-                posts.stream()
-                        .map(post -> new PostWithCommentCountDto(
-                                post.id(),
-                                post.title(),
-                                post.author(),
-                                post.createdAt(),
-                                post.viewCount(),
-                                commentCountMap.getOrDefault(post.id(), 0L)
-                        )).toList(),
-                pageable,
-                totalElements
-        );
-
-        return PostListResponse.of(resultPage);
-    }
-
     @Analytics
     public PostSearchListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
         Page<PostSearchResultProjection> posts = postRepository.searchByBoardIdAndKeyword(
