@@ -56,6 +56,17 @@ class JwtAuthFilterTest {
     }
 
     @Test
+    void 벤치_엔드포인트_GET_api_bench_posts_는_화이트리스트에_포함된다() throws ServletException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("GET");
+        request.setRequestURI("/api/_bench/posts");
+
+        boolean result = filter.shouldNotFilter(request);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
     void Bearer_뒤_토큰_없음_401_반환() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("POST");
