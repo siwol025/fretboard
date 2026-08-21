@@ -4,6 +4,7 @@ import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.domain.BoardType;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -46,5 +47,48 @@ class PostTest {
         // then
         assertThat(post.getTitle()).isEqualTo("새 제목");
         assertThat(post.getContent()).isEqualTo("새 내용");
+    }
+
+    @Test
+    @DisplayName("promote 호출 시 popularAt이 설정되고 isPopular가 true가 된다")
+    void promote_호출시_popularAt_설정되고_isPopular_true() {
+        // given
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(testMember())
+                .board(testBoard())
+                .build();
+
+        // then: 새 글은 인기글이 아니다
+        assertThat(post.isPopular()).isFalse();
+        assertThat(post.getPopularAt()).isNull();
+
+        // when
+        post.promote();
+
+        // then
+        assertThat(post.isPopular()).isTrue();
+        assertThat(post.getPopularAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("이미 승격된 글은 재승격 시 popularAt이 유지된다")
+    void 이미_승격된_글은_재승격시_popularAt_유지() {
+        // given
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(testMember())
+                .board(testBoard())
+                .build();
+        post.promote();
+        LocalDateTime firstPopularAt = post.getPopularAt();
+
+        // when
+        post.promote();
+
+        // then
+        assertThat(post.getPopularAt()).isEqualTo(firstPopularAt);
     }
 }
