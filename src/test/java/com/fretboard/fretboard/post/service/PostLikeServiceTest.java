@@ -8,8 +8,10 @@ import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.domain.PostLike;
+import com.fretboard.fretboard.global.config.PopularProperties;
 import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,10 +57,19 @@ class PostLikeServiceTest {
     private Post post;
     private Long postId;
 
+    private static final PopularProperties.Weights WEIGHTS =
+            new PopularProperties.Weights(1.0, 3.0, 2.0);
+
+    private PostLikeService newService(int likeThreshold) {
+        PopularProperties props = new PopularProperties(WEIGHTS, likeThreshold, 10, Duration.ofDays(2));
+        return new PostLikeService(
+                postLikeRepository, postRepository, authorizationHelper, popularScoreService, FIXED_CLOCK, props);
+    }
+
     @BeforeEach
     void setUp() {
-        postLikeService = new PostLikeService(
-                postLikeRepository, postRepository, authorizationHelper, popularScoreService, FIXED_CLOCK);
+        // 기존 임계값 테스트는 threshold=10 을 유지한다.
+        postLikeService = newService(10);
         member = Member.builder()
                 .username("testuser")
                 .password("password")
@@ -118,6 +129,22 @@ class PostLikeServiceTest {
                     FretBoardException fbe = (FretBoardException) ex;
                     assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.POST_NOT_FOUND);
                 });
+    }
+
+    @Test
+    void 좋아요_설정된_임계값_도달시_승격() {
+        // given — 설정된 임계값 3
+        postLikeService = newService(3);
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+        given(postLikeRepository.countByPostId(postId)).willReturn(3L);
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then — 설정된 임계값(3)에 도달했으므로 승격되어야 한다
+        assertThat(post.isPopular()).isTrue();
     }
 
     @Test

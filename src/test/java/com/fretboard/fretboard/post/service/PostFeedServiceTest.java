@@ -10,14 +10,16 @@ import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSummaryResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
+import com.fretboard.fretboard.global.config.PopularProperties;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -56,8 +58,22 @@ class PostFeedServiceTest {
     @Mock
     private PopularScoreService popularScoreService;
 
-    @InjectMocks
     private PostFeedService postFeedService;
+
+    private static final PopularProperties.Weights WEIGHTS =
+            new PopularProperties.Weights(1.0, 3.0, 2.0);
+
+    private PostFeedService newService(int todayLimit) {
+        PopularProperties props = new PopularProperties(WEIGHTS, 10, todayLimit, Duration.ofDays(2));
+        return new PostFeedService(
+                postRepository, boardRepository, commentCountLoader, popularScoreService, props);
+    }
+
+    @BeforeEach
+    void setUp() {
+        // 기존 테스트는 todayLimit=10 을 유지한다.
+        postFeedService = newService(10);
+    }
 
     @Test
     @DisplayName("getPostsByBoardId — 게시판 ID로 목록 페이징 반환")
@@ -301,6 +317,21 @@ class PostFeedServiceTest {
         // then — ZSet rank 순서([3, 1, 2])가 보존된다
         assertThat(result).extracting(PostSummaryDto::id)
                 .containsExactly(3L, 1L, 2L);
+    }
+
+    @Test
+    @DisplayName("getTodayPopularPosts — 설정된 limit 으로 조회한다")
+    void getTodayPopularPosts_설정된_limit_사용() {
+        // given — 설정된 todayLimit 5
+        postFeedService = newService(5);
+        given(popularScoreService.getTopPostIds(5))
+                .willReturn(List.of());
+
+        // when
+        postFeedService.getTodayPopularPosts();
+
+        // then — 설정된 limit(5)로 조회되어야 한다
+        verify(popularScoreService).getTopPostIds(5);
     }
 
     @Test

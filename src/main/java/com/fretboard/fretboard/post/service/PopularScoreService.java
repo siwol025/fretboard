@@ -1,7 +1,6 @@
 package com.fretboard.fretboard.post.service;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,33 +17,29 @@ import org.springframework.stereotype.Service;
 public class PopularScoreService {
 
     private static final String KEY_PREFIX = "popular:today:";
-    private static final Duration TTL = Duration.ofDays(2);
-
-    private static final double VIEW_WEIGHT = 1.0;
-    private static final double LIKE_WEIGHT = 3.0;
-    private static final double COMMENT_WEIGHT = 2.0;
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final Clock clock;
+    private final com.fretboard.fretboard.global.config.PopularProperties popularProperties;
 
     public void applyView(Long postId) {
-        addScore(postId, VIEW_WEIGHT);
+        addScore(postId, popularProperties.weights().view());
     }
 
     public void applyLike(Long postId) {
-        addScore(postId, LIKE_WEIGHT);
+        addScore(postId, popularProperties.weights().like());
     }
 
     public void cancelLike(Long postId) {
-        addScore(postId, -LIKE_WEIGHT);
+        addScore(postId, -popularProperties.weights().like());
     }
 
     public void applyComment(Long postId) {
-        addScore(postId, COMMENT_WEIGHT);
+        addScore(postId, popularProperties.weights().comment());
     }
 
     public void cancelComment(Long postId) {
-        addScore(postId, -COMMENT_WEIGHT);
+        addScore(postId, -popularProperties.weights().comment());
     }
 
     public List<Long> getTopPostIds(int limit) {
@@ -68,7 +63,7 @@ public class PopularScoreService {
         try {
             String key = todayKey();
             redisTemplate.opsForZSet().incrementScore(key, postId, delta);
-            redisTemplate.expire(key, TTL);
+            redisTemplate.expire(key, popularProperties.todayTtl());
         } catch (Exception e) {
             log.warn("Failed to update popular score in Redis (postId={}, delta={})", postId, delta, e);
         }

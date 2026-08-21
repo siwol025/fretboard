@@ -9,6 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 
+import com.fretboard.fretboard.global.config.PopularProperties;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,11 +41,15 @@ class PopularScoreServiceTest {
     @Mock
     private ZSetOperations<String, Object> zSetOps;
 
+    // 하드코딩 상수(view=1, like=3, comment=2, ttl=2d)와 다른 값으로 설정한다.
+    private static final PopularProperties POPULAR_PROPERTIES = new PopularProperties(
+            new PopularProperties.Weights(2.0, 5.0, 4.0), 10, 10, Duration.ofDays(7));
+
     private PopularScoreService popularScoreService;
 
     @BeforeEach
     void setUp() {
-        popularScoreService = new PopularScoreService(redisTemplate, FIXED_CLOCK);
+        popularScoreService = new PopularScoreService(redisTemplate, FIXED_CLOCK, POPULAR_PROPERTIES);
     }
 
     private String todayKey() {
@@ -51,7 +57,7 @@ class PopularScoreServiceTest {
     }
 
     @Test
-    void applyView_오늘자ZSet_가중치1_증분_및_TTL설정() {
+    void applyView_설정된_가중치_사용() {
         // given
         Long postId = 1L;
         String expectedKey = todayKey();
@@ -60,13 +66,12 @@ class PopularScoreServiceTest {
         // when
         popularScoreService.applyView(postId);
 
-        // then
-        verify(zSetOps).incrementScore(expectedKey, postId, 1.0);
-        verify(redisTemplate).expire(eq(expectedKey), any(Duration.class));
+        // then — 설정된 view 가중치(2.0)로 증분되어야 한다
+        verify(zSetOps).incrementScore(expectedKey, postId, 2.0);
     }
 
     @Test
-    void applyLike_가중치3_증분() {
+    void applyLike_설정된_가중치_사용() {
         // given
         Long postId = 1L;
         String expectedKey = todayKey();
@@ -75,12 +80,12 @@ class PopularScoreServiceTest {
         // when
         popularScoreService.applyLike(postId);
 
-        // then
-        verify(zSetOps).incrementScore(expectedKey, postId, 3.0);
+        // then — 설정된 like 가중치(5.0)로 증분되어야 한다
+        verify(zSetOps).incrementScore(expectedKey, postId, 5.0);
     }
 
     @Test
-    void applyComment_가중치2_증분() {
+    void applyComment_설정된_가중치_사용() {
         // given
         Long postId = 1L;
         String expectedKey = todayKey();
@@ -89,12 +94,12 @@ class PopularScoreServiceTest {
         // when
         popularScoreService.applyComment(postId);
 
-        // then
-        verify(zSetOps).incrementScore(expectedKey, postId, 2.0);
+        // then — 설정된 comment 가중치(4.0)로 증분되어야 한다
+        verify(zSetOps).incrementScore(expectedKey, postId, 4.0);
     }
 
     @Test
-    void cancelLike_가중치3_차감() {
+    void cancelLike_설정된_가중치_차감() {
         // given
         Long postId = 1L;
         String expectedKey = todayKey();
@@ -103,12 +108,12 @@ class PopularScoreServiceTest {
         // when
         popularScoreService.cancelLike(postId);
 
-        // then
-        verify(zSetOps).incrementScore(expectedKey, postId, -3.0);
+        // then — 설정된 like 가중치(-5.0)로 차감되어야 한다
+        verify(zSetOps).incrementScore(expectedKey, postId, -5.0);
     }
 
     @Test
-    void cancelComment_가중치2_차감() {
+    void cancelComment_설정된_가중치_차감() {
         // given
         Long postId = 1L;
         String expectedKey = todayKey();
@@ -117,8 +122,24 @@ class PopularScoreServiceTest {
         // when
         popularScoreService.cancelComment(postId);
 
-        // then
-        verify(zSetOps).incrementScore(expectedKey, postId, -2.0);
+        // then — 설정된 comment 가중치(-4.0)로 차감되어야 한다
+        verify(zSetOps).incrementScore(expectedKey, postId, -4.0);
+    }
+
+    @Test
+    void expire_설정된_TTL_사용() {
+        // given
+        Long postId = 1L;
+        String expectedKey = todayKey();
+        given(redisTemplate.opsForZSet()).willReturn(zSetOps);
+
+        // when
+        popularScoreService.applyView(postId);
+
+        // then — 설정된 TTL(7일)로 expire 되어야 한다
+        ArgumentCaptor<Duration> ttlCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(redisTemplate).expire(eq(expectedKey), ttlCaptor.capture());
+        assertThat(ttlCaptor.getValue()).isEqualTo(Duration.ofDays(7));
     }
 
     @Test
@@ -171,18 +192,18 @@ class PopularScoreServiceTest {
         Long postId = 1L;
         Clock clockDay22 = Clock.fixed(Instant.parse("2026-08-22T12:00:00Z"), KST);
         Clock clockDay23 = Clock.fixed(Instant.parse("2026-08-23T12:00:00Z"), KST);
-        PopularScoreService serviceDay22 = new PopularScoreService(redisTemplate, clockDay22);
-        PopularScoreService serviceDay23 = new PopularScoreService(redisTemplate, clockDay23);
+        PopularScoreService serviceDay22 = new PopularScoreService(redisTemplate, clockDay22, POPULAR_PROPERTIES);
+        PopularScoreService serviceDay23 = new PopularScoreService(redisTemplate, clockDay23, POPULAR_PROPERTIES);
         given(redisTemplate.opsForZSet()).willReturn(zSetOps);
 
         // when
         serviceDay22.applyLike(postId);
         serviceDay23.applyLike(postId);
 
-        // then: 각각 해당 날짜가 포함된 서로 다른 키로 증분되어야 한다
+        // then: 각각 해당 날짜가 포함된 서로 다른 키로 증분되어야 한다 (설정된 like 가중치 5.0)
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(zSetOps, org.mockito.Mockito.times(2))
-                .incrementScore(keyCaptor.capture(), eq(postId), eq(3.0));
+                .incrementScore(keyCaptor.capture(), eq(postId), eq(5.0));
         assertThat(keyCaptor.getAllValues())
                 .containsExactly("popular:today:2026-08-22", "popular:today:2026-08-23");
     }

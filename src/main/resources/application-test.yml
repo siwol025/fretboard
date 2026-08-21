@@ -58,6 +58,12 @@ cloud:
       temporary-storage-path: temp/
       image-storage-path: images/
 
+popular:
+  weights: { view: 1, like: 3, comment: 2 }
+  like-threshold: 10
+  today-limit: 10
+  today-ttl: 2d
+
 security:
   jwt:
     token:

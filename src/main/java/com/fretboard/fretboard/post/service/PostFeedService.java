@@ -38,9 +38,10 @@ public class PostFeedService {
     private final BoardRepository boardRepository;
     private final CommentCountLoader commentCountLoader;
     private final PopularScoreService popularScoreService;
+    private final com.fretboard.fretboard.global.config.PopularProperties popularProperties;
 
     public List<PostSummaryDto> getTodayPopularPosts() {
-        List<Long> ids = popularScoreService.getTopPostIds(10);
+        List<Long> ids = popularScoreService.getTopPostIds(popularProperties.todayLimit());
         if (ids.isEmpty()) {
             return List.of();
         }

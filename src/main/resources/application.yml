@@ -10,6 +10,12 @@ spring:
 #      hibernate:
 #        default_batch_fetch_size: 100
 
+popular:
+  weights: { view: 1, like: 3, comment: 2 }
+  like-threshold: 10
+  today-limit: 10
+  today-ttl: 2d
+
 management:
   endpoints:
     web:

@@ -21,13 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PostLikeService {
 
-    private static final long POPULAR_LIKE_THRESHOLD = 10;
-
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
     private final AuthorizationHelper authorizationHelper;
     private final PopularScoreService popularScoreService;
     private final Clock clock;
+    private final com.fretboard.fretboard.global.config.PopularProperties popularProperties;
 
     @Transactional
     public void toggleLike(Long postId, MemberAuth memberAuth) {
@@ -47,7 +46,7 @@ public class PostLikeService {
     }
 
     private void promoteIfPopular(Post post, Long postId) {
-        if (postLikeRepository.countByPostId(postId) >= POPULAR_LIKE_THRESHOLD && !post.isPopular()) {
+        if (postLikeRepository.countByPostId(postId) >= popularProperties.likeThreshold() && !post.isPopular()) {
             post.promote(LocalDateTime.now(clock));
         }
     }
