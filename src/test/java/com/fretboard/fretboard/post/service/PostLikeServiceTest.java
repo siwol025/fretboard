@@ -13,10 +13,13 @@ import com.fretboard.fretboard.post.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +32,10 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class PostLikeServiceTest {
 
-    @InjectMocks
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final Clock FIXED_CLOCK =
+            Clock.fixed(Instant.parse("2026-08-22T12:00:00Z"), KST);
+
     private PostLikeService postLikeService;
 
     @Mock
@@ -51,6 +57,8 @@ class PostLikeServiceTest {
 
     @BeforeEach
     void setUp() {
+        postLikeService = new PostLikeService(
+                postLikeRepository, postRepository, authorizationHelper, popularScoreService, FIXED_CLOCK);
         member = Member.builder()
                 .username("testuser")
                 .password("password")
@@ -125,6 +133,7 @@ class PostLikeServiceTest {
 
         // then
         assertThat(post.isPopular()).isTrue();
+        assertThat(post.getPopularAt()).isEqualTo(LocalDateTime.now(FIXED_CLOCK));
     }
 
     @Test

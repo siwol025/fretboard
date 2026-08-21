@@ -93,8 +93,6 @@ class PopularPostRepositoryTest {
      */
     private Post persistPromotedPost(String title, Board board, LocalDateTime popularAt) {
         Post post = persistPost(title, board);
-        post.promote();
-        entityManager.flush();
         ReflectionTestUtils.setField(post, "popularAt", popularAt);
         entityManager.merge(post);
         entityManager.flush();

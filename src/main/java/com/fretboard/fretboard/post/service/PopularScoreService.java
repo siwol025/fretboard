@@ -1,8 +1,8 @@
 package com.fretboard.fretboard.post.service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 public class PopularScoreService {
 
     private static final String KEY_PREFIX = "popular:today:";
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final Duration TTL = Duration.ofDays(2);
 
     private static final double VIEW_WEIGHT = 1.0;
@@ -26,6 +25,7 @@ public class PopularScoreService {
     private static final double COMMENT_WEIGHT = 2.0;
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final Clock clock;
 
     public void applyView(Long postId) {
         addScore(postId, VIEW_WEIGHT);
@@ -75,6 +75,6 @@ public class PopularScoreService {
     }
 
     private String todayKey() {
-        return KEY_PREFIX + LocalDate.now(KST);
+        return KEY_PREFIX + LocalDate.now(clock);
     }
 }

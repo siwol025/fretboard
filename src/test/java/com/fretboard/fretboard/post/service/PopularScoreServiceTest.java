@@ -1,14 +1,17 @@
 package com.fretboard.fretboard.post.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.LinkedHashSet;
@@ -25,8 +28,10 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class PopularScoreServiceTest {
 
-    @InjectMocks
-    private PopularScoreService popularScoreService;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    // 2026-08-22 21:00 KST (12:00 UTC on 2026-08-22)
+    private static final Clock FIXED_CLOCK =
+            Clock.fixed(Instant.parse("2026-08-22T12:00:00Z"), KST);
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -34,8 +39,15 @@ class PopularScoreServiceTest {
     @Mock
     private ZSetOperations<String, Object> zSetOps;
 
+    private PopularScoreService popularScoreService;
+
+    @BeforeEach
+    void setUp() {
+        popularScoreService = new PopularScoreService(redisTemplate, FIXED_CLOCK);
+    }
+
     private String todayKey() {
-        return "popular:today:" + LocalDate.now(ZoneId.of("Asia/Seoul"));
+        return "popular:today:" + LocalDate.now(FIXED_CLOCK);
     }
 
     @Test
@@ -151,5 +163,27 @@ class PopularScoreServiceTest {
 
         // when & then
         assertThatCode(() -> popularScoreService.applyLike(postId)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void 자정_지나면_다른_날짜키_사용() {
+        // given: 하루 차이가 나는 두 개의 고정 시각 (KST 기준 2026-08-22 vs 2026-08-23)
+        Long postId = 1L;
+        Clock clockDay22 = Clock.fixed(Instant.parse("2026-08-22T12:00:00Z"), KST);
+        Clock clockDay23 = Clock.fixed(Instant.parse("2026-08-23T12:00:00Z"), KST);
+        PopularScoreService serviceDay22 = new PopularScoreService(redisTemplate, clockDay22);
+        PopularScoreService serviceDay23 = new PopularScoreService(redisTemplate, clockDay23);
+        given(redisTemplate.opsForZSet()).willReturn(zSetOps);
+
+        // when
+        serviceDay22.applyLike(postId);
+        serviceDay23.applyLike(postId);
+
+        // then: 각각 해당 날짜가 포함된 서로 다른 키로 증분되어야 한다
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(zSetOps, org.mockito.Mockito.times(2))
+                .incrementScore(keyCaptor.capture(), eq(postId), eq(3.0));
+        assertThat(keyCaptor.getAllValues())
+                .containsExactly("popular:today:2026-08-22", "popular:today:2026-08-23");
     }
 }

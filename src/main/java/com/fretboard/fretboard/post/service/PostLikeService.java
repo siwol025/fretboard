@@ -10,6 +10,8 @@ import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.domain.PostLike;
 import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class PostLikeService {
     private final PostRepository postRepository;
     private final AuthorizationHelper authorizationHelper;
     private final PopularScoreService popularScoreService;
+    private final Clock clock;
 
     @Transactional
     public void toggleLike(Long postId, MemberAuth memberAuth) {
@@ -45,7 +48,7 @@ public class PostLikeService {
 
     private void promoteIfPopular(Post post, Long postId) {
         if (postLikeRepository.countByPostId(postId) >= POPULAR_LIKE_THRESHOLD && !post.isPopular()) {
-            post.promote();
+            post.promote(LocalDateTime.now(clock));
         }
     }
 }

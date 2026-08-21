@@ -83,9 +83,9 @@ public class Post extends BaseEntity {
         return popularAt != null;
     }
 
-    public void promote() {
+    public void promote(LocalDateTime now) {
         if (popularAt == null) {
-            popularAt = LocalDateTime.now();
+            popularAt = now;
         }
     }
 }

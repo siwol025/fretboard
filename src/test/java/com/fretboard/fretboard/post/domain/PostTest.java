@@ -65,11 +65,12 @@ class PostTest {
         assertThat(post.getPopularAt()).isNull();
 
         // when
-        post.promote();
+        LocalDateTime now = LocalDateTime.of(2026, 8, 22, 21, 0, 0);
+        post.promote(now);
 
         // then
         assertThat(post.isPopular()).isTrue();
-        assertThat(post.getPopularAt()).isNotNull();
+        assertThat(post.getPopularAt()).isEqualTo(now);
     }
 
     @Test
@@ -82,13 +83,15 @@ class PostTest {
                 .member(testMember())
                 .board(testBoard())
                 .build();
-        post.promote();
+        LocalDateTime firstNow = LocalDateTime.of(2026, 8, 22, 21, 0, 0);
+        post.promote(firstNow);
         LocalDateTime firstPopularAt = post.getPopularAt();
 
-        // when
-        post.promote();
+        // when: 다른 시각으로 재승격 시도
+        LocalDateTime secondNow = LocalDateTime.of(2026, 8, 23, 10, 0, 0);
+        post.promote(secondNow);
 
-        // then
+        // then: 최초 승격 시각이 유지된다
         assertThat(post.getPopularAt()).isEqualTo(firstPopularAt);
     }
 }
