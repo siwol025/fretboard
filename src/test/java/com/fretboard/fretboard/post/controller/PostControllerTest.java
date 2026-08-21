@@ -27,7 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -167,15 +166,11 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("인기글 조회 시 PostFeedService를 통해 반환한다")
-    void getBestPosts_인기글_PostFeedService_통해_반환() throws Exception {
-        // given
-        given(postFeedService.getMostPosts()).willReturn(List.of());
-
-        // when & then
+    @DisplayName("제거된 /best 엔드포인트 요청 시 404 응답")
+    void getBestPosts_제거된_엔드포인트_404_응답() throws Exception {
+        // when & then — /best 엔드포인트가 제거되어 더 이상 매핑이 존재하지 않는다
         mockMvc.perform(get("/api/posts/best"))
-                .andExpect(status().isOk());
-        verify(postFeedService).getMostPosts();
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -96,22 +96,6 @@ class PostFeedRoutingTest {
     }
 
     @Test
-    void getMostPosts_실행중_ANALYTICS_워크로드() {
-        when(viewCountService.getTopPosts(anyInt())).thenReturn(List.of());
-        when(postRepository.findByPostIds(any()))
-                .thenAnswer(invocation -> {
-                    capturedWorkload = WorkloadContextHolder.getWorkload();
-                    return List.of();
-                });
-
-        postFeedService.getMostPosts();
-
-        assertThat(capturedWorkload)
-                .as("getMostPosts 실행 중에는 ANALYTICS 워크로드여야 한다")
-                .isEqualTo(ReadWorkload.ANALYTICS);
-    }
-
-    @Test
     void getRecentPosts_실행중_ANALYTICS_워크로드() {
         stubAlwaysMissCache();
         when(boardRepository.findAll(any(Sort.class)))

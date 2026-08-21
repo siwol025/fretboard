@@ -7,7 +7,6 @@ import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
-import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.service.PostFeedService;
 import com.fretboard.fretboard.post.service.PostLikeService;
@@ -60,13 +59,13 @@ public class PostController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long id,
                                                       @LoginMember(required = false) MemberAuth memberAuth) {
         return ResponseEntity.ok().body(postService.getPostDetail(id, memberAuth));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<Void> updatePostDetails(@PathVariable Long id,
                                            @Valid @RequestBody PostEditRequest postRequest,
                                            @LoginMember MemberAuth memberAuth) {
@@ -74,7 +73,7 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<Void> removePost(@PathVariable Long id,
                                            @LoginMember MemberAuth memberAuth) {
         postService.deletePost(id, memberAuth);
@@ -91,12 +90,6 @@ public class PostController {
     @GetMapping("/recent-posts")
     public ResponseEntity<List<RecentPostsPerBoardResponse>> getRecentPostsPerBoard() {
         List<RecentPostsPerBoardResponse> response = postFeedService.getRecentPosts();
-        return ResponseEntity.ok().body(response);
-    }
-
-    @GetMapping("/best")
-    public ResponseEntity<List<PostSummaryDto>> getBestPosts() {
-        List<PostSummaryDto> response = postFeedService.getMostPosts();
         return ResponseEntity.ok().body(response);
     }
 }

@@ -169,28 +169,6 @@ class PostFeedServiceTest {
     }
 
     @Test
-    @DisplayName("getMostPosts — Redis 조회수 기반 인기글 Top5 반환")
-    void getMostPosts_인기글_Top5_반환() {
-        // given
-        List<Long> topPostIds = List.of(1L, 2L);
-        List<PostSummaryDto> topPostDtos = List.of(
-                new PostSummaryDto(1L, "인기글1", "작성자A", LocalDateTime.now(), 100L),
-                new PostSummaryDto(2L, "인기글2", "작성자B", LocalDateTime.now(), 80L)
-        );
-
-        given(viewCountService.getTopPosts(5)).willReturn(topPostIds);
-        given(postRepository.findByPostIds(topPostIds)).willReturn(topPostDtos);
-
-        // when
-        List<PostSummaryDto> result = postFeedService.getMostPosts();
-
-        // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).id()).isEqualTo(1L);
-        assertThat(result.get(1).id()).isEqualTo(2L);
-    }
-
-    @Test
     @DisplayName("getRecentPosts — 게시판별 최근 게시글 목록 반환")
     void getRecentPosts_게시판별_최근게시글_반환() {
         // given
