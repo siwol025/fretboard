@@ -41,6 +41,19 @@ public class PostFeedService {
                 boardId, pageable.getPageSize(), offset);
         long totalElements = postRepository.countByBoardId(boardId);
 
+        return assemblePostList(posts, totalElements, pageable);
+    }
+
+    public PostListResponse getPopularPostsByBoardId(final Long boardId, Pageable pageable) {
+        long offset = (long) pageable.getPageNumber() * pageable.getPageSize();
+        List<PostSummaryDto> posts = postRepository.findPopularPostSummaryByBoardId(
+                boardId, pageable.getPageSize(), offset);
+        long totalElements = postRepository.countPopularByBoardId(boardId);
+
+        return assemblePostList(posts, totalElements, pageable);
+    }
+
+    private PostListResponse assemblePostList(List<PostSummaryDto> posts, long totalElements, Pageable pageable) {
         List<Long> postIds = posts.stream()
                 .map(PostSummaryDto::id)
                 .toList();

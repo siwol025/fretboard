@@ -166,6 +166,19 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("GET /popular 게시판별 인기글 목록 반환")
+    void GET_popular_게시판별_인기글_목록_반환() throws Exception {
+        // given
+        given(postFeedService.getPopularPostsByBoardId(eq(1L), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then — /popular?boardId=1 엔드포인트가 아직 없어 404 (RED)
+        mockMvc.perform(get("/api/posts/popular").param("boardId", "1"))
+                .andExpect(status().isOk());
+        verify(postFeedService).getPopularPostsByBoardId(eq(1L), any(Pageable.class));
+    }
+
+    @Test
     @DisplayName("제거된 /best 엔드포인트 요청 시 404 응답")
     void getBestPosts_제거된_엔드포인트_404_응답() throws Exception {
         // when & then — /best 엔드포인트가 제거되어 더 이상 매핑이 존재하지 않는다

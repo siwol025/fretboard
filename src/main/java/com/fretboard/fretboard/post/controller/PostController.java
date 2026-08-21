@@ -51,6 +51,13 @@ public class PostController {
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping("/popular")
+    public ResponseEntity<PostListResponse> getPopularPostsByBoardId(@RequestParam Long boardId,
+                                                                     @PageableDefault(size = 10, sort = "popularAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PostListResponse response = postFeedService.getPopularPostsByBoardId(boardId, pageable);
+        return ResponseEntity.ok().body(response);
+    }
+
     @GetMapping(params = {"boardId", "keyword"})
     public ResponseEntity<PostSearchListResponse> searchPosts(@RequestParam Long boardId,
                                                               @RequestParam String keyword,

@@ -56,6 +56,46 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     long countByBoardId(Long boardId);
 
+    default List<PostSummaryDto> findPopularPostSummaryByBoardId(Long boardId, int size, long offset) {
+        return findPopularPostSummaryByBoardIdRaw(boardId, size, offset).stream()
+                .map(PostSummaryRowMapper::map)
+                .toList();
+    }
+
+    /*
+     * 게시판별 인기글(승격글) 목록: popular_at IS NOT NULL 인 글만 popular_at DESC 로 정렬해 페이징한다.
+     * SELECT 컬럼 순서는 findPostSummaryByBoardIdDeferredRaw 와 동일하게
+     * (id, title, nickname, created_at, view_count) 을 유지해 PostSummaryRowMapper 를 공유한다.
+     */
+    @Query(
+            value = """
+                SELECT p.id, p.title, m.nickname, p.created_at, p.view_count
+                FROM post p
+                JOIN member m ON m.id = p.member_id
+                WHERE p.board_id = :boardId
+                  AND p.popular_at IS NOT NULL
+                ORDER BY p.popular_at DESC
+                LIMIT :size OFFSET :offset
+                """,
+            nativeQuery = true
+    )
+    List<Object[]> findPopularPostSummaryByBoardIdRaw(
+            @Param("boardId") Long boardId,
+            @Param("size") int size,
+            @Param("offset") long offset
+    );
+
+    @Query(
+            value = """
+                SELECT COUNT(*)
+                FROM post
+                WHERE board_id = :boardId
+                  AND popular_at IS NOT NULL
+                """,
+            nativeQuery = true
+    )
+    long countPopularByBoardId(@Param("boardId") Long boardId);
+
     default List<MyPostSummaryDto> findMyPostSummaryDeferred(Long memberId, int size, long offset) {
         return findMyPostSummaryDeferredRaw(memberId, size, offset).stream()
                 .map(MyPostSummaryRowMapper::map)
