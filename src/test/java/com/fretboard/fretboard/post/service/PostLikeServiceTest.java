@@ -108,4 +108,51 @@ class PostLikeServiceTest {
                     assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.POST_NOT_FOUND);
                 });
     }
+
+    @Test
+    void 좋아요_추가로_임계값_10_도달시_게시글_승격됨() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+        given(postLikeRepository.countByPostId(postId)).willReturn(10L);
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        assertThat(post.isPopular()).isTrue();
+    }
+
+    @Test
+    void 좋아요_추가했지만_임계값_미만이면_승격_안됨() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+        given(postLikeRepository.countByPostId(postId)).willReturn(9L);
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        assertThat(post.isPopular()).isFalse();
+    }
+
+    @Test
+    void 좋아요_취소시_승격판정_하지_않음() {
+        // given
+        PostLike existingLike = PostLike.of(post, member);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.of(existingLike));
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        assertThat(post.isPopular()).isFalse();
+        verify(postLikeRepository, never()).countByPostId(any());
+    }
 }

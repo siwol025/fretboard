@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PostLikeService {
 
+    private static final long POPULAR_LIKE_THRESHOLD = 10;
+
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
     private final AuthorizationHelper authorizationHelper;
@@ -32,8 +34,15 @@ public class PostLikeService {
         Optional<PostLike> existingLike = postLikeRepository.findByPostIdAndMemberId(postId, memberAuth.memberId());
         if (existingLike.isEmpty()) {
             postLikeRepository.save(PostLike.of(post, member));
+            promoteIfPopular(post, postId);
         } else {
             postLikeRepository.delete(existingLike.get());
+        }
+    }
+
+    private void promoteIfPopular(Post post, Long postId) {
+        if (postLikeRepository.countByPostId(postId) >= POPULAR_LIKE_THRESHOLD && !post.isPopular()) {
+            post.promote();
         }
     }
 }
