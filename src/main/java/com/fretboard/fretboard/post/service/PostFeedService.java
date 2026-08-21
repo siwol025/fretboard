@@ -16,6 +16,9 @@ import com.fretboard.fretboard.post.repository.PostRepository;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -34,6 +37,23 @@ public class PostFeedService {
     private final PostRepository postRepository;
     private final BoardRepository boardRepository;
     private final CommentCountLoader commentCountLoader;
+    private final PopularScoreService popularScoreService;
+
+    public List<PostSummaryDto> getTodayPopularPosts() {
+        List<Long> ids = popularScoreService.getTopPostIds(10);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        List<PostSummaryDto> posts = postRepository.findByPostIds(ids);
+        Map<Long, PostSummaryDto> postById = posts.stream()
+                .collect(Collectors.toMap(PostSummaryDto::id, Function.identity()));
+
+        return ids.stream()
+                .map(postById::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
 
     public PostListResponse getPostsByBoardId(final Long boardId, Pageable pageable) {
         long offset = (long) pageable.getPageNumber() * pageable.getPageSize();

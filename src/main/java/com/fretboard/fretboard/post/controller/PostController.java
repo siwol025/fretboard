@@ -4,6 +4,7 @@ import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
+import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
@@ -97,6 +98,12 @@ public class PostController {
     @GetMapping("/recent-posts")
     public ResponseEntity<List<RecentPostsPerBoardResponse>> getRecentPostsPerBoard() {
         List<RecentPostsPerBoardResponse> response = postFeedService.getRecentPosts();
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/popular/today")
+    public ResponseEntity<List<PostSummaryDto>> getTodayPopularPosts() {
+        List<PostSummaryDto> response = postFeedService.getTodayPopularPosts();
         return ResponseEntity.ok().body(response);
     }
 }

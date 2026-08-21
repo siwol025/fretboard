@@ -179,6 +179,19 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("GET /popular/today 오늘의 인기글 반환")
+    void GET_popular_today_오늘의_인기글_반환() throws Exception {
+        // given
+        given(postFeedService.getTodayPopularPosts())
+                .willReturn(java.util.List.of());
+
+        // when & then — /popular/today 엔드포인트가 아직 없어 404 (RED)
+        mockMvc.perform(get("/api/posts/popular/today"))
+                .andExpect(status().isOk());
+        verify(postFeedService).getTodayPopularPosts();
+    }
+
+    @Test
     @DisplayName("제거된 /best 엔드포인트 요청 시 404 응답")
     void getBestPosts_제거된_엔드포인트_404_응답() throws Exception {
         // when & then — /best 엔드포인트가 제거되어 더 이상 매핑이 존재하지 않는다

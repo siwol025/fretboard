@@ -53,6 +53,9 @@ class PostFeedServiceTest {
     @Mock
     private BoardRepository boardRepository;
 
+    @Mock
+    private PopularScoreService popularScoreService;
+
     @InjectMocks
     private PostFeedService postFeedService;
 
@@ -276,6 +279,42 @@ class PostFeedServiceTest {
         // then
         assertThat(result).extracting(RecentPostsPerBoardResponse::getBoardId)
                 .containsExactly(1L, 2L, 3L);
+    }
+
+    @Test
+    @DisplayName("getTodayPopularPosts — 상위 10 점수 순서를 보존해 반환한다")
+    void getTodayPopularPosts_상위10_점수순서_보존_반환() {
+        // given — ZSet rank 순서: 3, 1, 2
+        given(popularScoreService.getTopPostIds(10))
+                .willReturn(List.of(3L, 1L, 2L));
+
+        // findByPostIds 는 임의 순서(1, 2, 3)로 반환할 수 있다
+        PostSummaryDto post1 = new PostSummaryDto(1L, "글1", "작성자1", LocalDateTime.now(), 5L);
+        PostSummaryDto post2 = new PostSummaryDto(2L, "글2", "작성자2", LocalDateTime.now(), 7L);
+        PostSummaryDto post3 = new PostSummaryDto(3L, "글3", "작성자3", LocalDateTime.now(), 9L);
+        given(postRepository.findByPostIds(List.of(3L, 1L, 2L)))
+                .willReturn(List.of(post1, post2, post3));
+
+        // when
+        List<PostSummaryDto> result = postFeedService.getTodayPopularPosts();
+
+        // then — ZSet rank 순서([3, 1, 2])가 보존된다
+        assertThat(result).extracting(PostSummaryDto::id)
+                .containsExactly(3L, 1L, 2L);
+    }
+
+    @Test
+    @DisplayName("getTodayPopularPosts — 점수가 없으면 빈 리스트를 반환한다")
+    void getTodayPopularPosts_점수없으면_빈리스트() {
+        // given
+        given(popularScoreService.getTopPostIds(10))
+                .willReturn(List.of());
+
+        // when
+        List<PostSummaryDto> result = postFeedService.getTodayPopularPosts();
+
+        // then
+        assertThat(result).isEmpty();
     }
 
     // --- fixtures ---
