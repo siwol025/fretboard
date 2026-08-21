@@ -24,6 +24,7 @@ public class PostLikeService {
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
     private final AuthorizationHelper authorizationHelper;
+    private final PopularScoreService popularScoreService;
 
     @Transactional
     public void toggleLike(Long postId, MemberAuth memberAuth) {
@@ -35,8 +36,10 @@ public class PostLikeService {
         if (existingLike.isEmpty()) {
             postLikeRepository.save(PostLike.of(post, member));
             promoteIfPopular(post, postId);
+            popularScoreService.applyLike(postId);
         } else {
             postLikeRepository.delete(existingLike.get());
+            popularScoreService.cancelLike(postId);
         }
     }
 

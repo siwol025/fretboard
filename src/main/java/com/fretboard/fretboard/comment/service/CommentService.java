@@ -12,6 +12,7 @@ import com.fretboard.fretboard.global.utils.HtmlSanitizer;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import com.fretboard.fretboard.post.service.PopularScoreService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final AuthorizationHelper authorizationHelper;
+    private final PopularScoreService popularScoreService;
 
     @Transactional
     public Long addComment(final Long postId, final CommentRequest commentRequest, final MemberAuth memberAuth) {
@@ -36,6 +38,7 @@ public class CommentService {
         Comment comment = Comment.parent(sanitized, member, post);
         post.addComment(comment);
         commentRepository.save(comment);
+        popularScoreService.applyComment(postId);
         return comment.getId();
     }
 
@@ -56,6 +59,7 @@ public class CommentService {
     public void deleteComment(final Long id, final MemberAuth memberAuth) {
         Comment comment = findActiveCommentOrThrow(id);
         authorizationHelper.validateIsAuthor(comment.getMember(), authorizationHelper.getMember(memberAuth));
+        popularScoreService.cancelComment(comment.getPost().getId());
         comment.softDelete();
     }
 

@@ -73,6 +73,9 @@ class PostServiceTest {
     @Mock
     private CommentCountLoader commentCountLoader;
 
+    @Mock
+    private PopularScoreService popularScoreService;
+
     private Member member;
 
     @BeforeEach
@@ -362,6 +365,26 @@ class PostServiceTest {
                         tuple(100L, 10L, "게시판1", 7),
                         tuple(101L, 20L, "게시판2", 0)
                 );
+    }
+
+    @Test
+    void getPostDetail_조회시_applyView_호출() {
+        // given
+        Long postId = 1L;
+        MemberAuth memberAuth = new MemberAuth(10L);
+        Post post = createPostWithId(postId);
+
+        given(postRepository.findPostDetailById(postId)).willReturn(Optional.of(post));
+        given(viewCountService.hasViewCount(postId)).willReturn(true);
+        given(viewCountService.incrementViewCount(postId)).willReturn(1L);
+        given(postLikeRepository.countByPostId(postId)).willReturn(0L);
+        given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(false);
+
+        // when
+        postService.getPostDetail(postId, memberAuth);
+
+        // then
+        verify(popularScoreService).applyView(postId);
     }
 
     private Post createPostWithId(Long postId) {

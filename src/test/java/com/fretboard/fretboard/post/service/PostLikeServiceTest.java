@@ -41,6 +41,9 @@ class PostLikeServiceTest {
     @Mock
     private AuthorizationHelper authorizationHelper;
 
+    @Mock
+    private PopularScoreService popularScoreService;
+
     private Member member;
     private MemberAuth memberAuth;
     private Post post;
@@ -137,6 +140,36 @@ class PostLikeServiceTest {
 
         // then
         assertThat(post.isPopular()).isFalse();
+    }
+
+    @Test
+    void 좋아요_추가시_applyLike_호출() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(popularScoreService).applyLike(postId);
+    }
+
+    @Test
+    void 좋아요_취소시_cancelLike_호출() {
+        // given
+        PostLike existingLike = PostLike.of(post, member);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.of(existingLike));
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(popularScoreService).cancelLike(postId);
     }
 
     @Test

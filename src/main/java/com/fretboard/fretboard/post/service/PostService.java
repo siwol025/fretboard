@@ -39,6 +39,7 @@ public class PostService {
     private final AuthorizationHelper authorizationHelper;
     private final PostLikeRepository postLikeRepository;
     private final CommentCountLoader commentCountLoader;
+    private final PopularScoreService popularScoreService;
 
     @Transactional
     public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
@@ -89,6 +90,7 @@ public class PostService {
         }
 
         Long updatedViewCount = viewCountService.incrementViewCount(id);
+        popularScoreService.applyView(id);
 
         long likeCount = postLikeRepository.countByPostId(id);
         boolean isLiked = memberAuth != null && postLikeRepository.existsByPostIdAndMemberId(id, memberAuth.memberId());

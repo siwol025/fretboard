@@ -13,12 +13,14 @@ import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import com.fretboard.fretboard.post.service.PopularScoreService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +47,9 @@ class CommentServiceTest {
 
     @Mock
     private AuthorizationHelper authorizationHelper;
+
+    @Mock
+    private PopularScoreService popularScoreService;
 
     private Member member;
     private MemberAuth memberAuth;
@@ -255,6 +260,41 @@ class CommentServiceTest {
                     FretBoardException fbe = (FretBoardException) ex;
                     assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.COMMENT_NOT_FOUND);
                 });
+    }
+
+    @Test
+    void 댓글_추가시_applyComment_호출() {
+        // given
+        Long postId = 10L;
+        CommentRequest request = new CommentRequest("테스트 댓글 내용");
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(commentRepository.save(any(Comment.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        commentService.addComment(postId, request, memberAuth);
+
+        // then
+        verify(popularScoreService).applyComment(postId);
+    }
+
+    @Test
+    void 댓글_삭제시_cancelComment_호출() {
+        // given
+        Long commentId = 30L;
+        Long postId = 10L;
+        ReflectionTestUtils.setField(post, "id", postId);
+        Comment comment = Comment.parent("댓글 내용", member, post);
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+
+        // when
+        commentService.deleteComment(commentId, memberAuth);
+
+        // then
+        verify(popularScoreService).cancelComment(postId);
     }
 
     @Test
