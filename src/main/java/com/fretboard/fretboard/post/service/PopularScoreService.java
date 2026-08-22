@@ -1,5 +1,6 @@
 package com.fretboard.fretboard.post.service;
 
+import com.fretboard.fretboard.global.config.PopularProperties;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class PopularScoreService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final Clock clock;
-    private final com.fretboard.fretboard.global.config.PopularProperties popularProperties;
+    private final PopularProperties popularProperties;
 
     public void applyView(Long postId) {
         addScore(postId, popularProperties.weights().view());
