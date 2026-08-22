@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -50,6 +51,9 @@ class CommentServiceTest {
 
     @Mock
     private PopularScoreService popularScoreService;
+
+    @Mock
+    private CacheManager cacheManager;
 
     private Member member;
     private MemberAuth memberAuth;
