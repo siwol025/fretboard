@@ -8,15 +8,20 @@ import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.domain.PostLike;
+import com.fretboard.fretboard.global.config.PopularProperties;
 import com.fretboard.fretboard.post.repository.PostLikeRepository;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +34,10 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class PostLikeServiceTest {
 
-    @InjectMocks
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final Clock FIXED_CLOCK =
+            Clock.fixed(Instant.parse("2026-08-22T12:00:00Z"), KST);
+
     private PostLikeService postLikeService;
 
     @Mock
@@ -41,13 +49,27 @@ class PostLikeServiceTest {
     @Mock
     private AuthorizationHelper authorizationHelper;
 
+    @Mock
+    private PopularScoreService popularScoreService;
+
     private Member member;
     private MemberAuth memberAuth;
     private Post post;
     private Long postId;
 
+    private static final PopularProperties.Weights WEIGHTS =
+            new PopularProperties.Weights(1.0, 3.0, 2.0);
+
+    private PostLikeService newService(int likeThreshold) {
+        PopularProperties props = new PopularProperties(WEIGHTS, likeThreshold, 10, Duration.ofDays(2));
+        return new PostLikeService(
+                postLikeRepository, postRepository, authorizationHelper, popularScoreService, FIXED_CLOCK, props);
+    }
+
     @BeforeEach
     void setUp() {
+        // 기존 임계값 테스트는 threshold=10 을 유지한다.
+        postLikeService = newService(10);
         member = Member.builder()
                 .username("testuser")
                 .password("password")
@@ -107,5 +129,99 @@ class PostLikeServiceTest {
                     FretBoardException fbe = (FretBoardException) ex;
                     assertThat(fbe.getExceptionType()).isEqualTo(ExceptionType.POST_NOT_FOUND);
                 });
+    }
+
+    @Test
+    void 좋아요_설정된_임계값_도달시_승격() {
+        // given — 설정된 임계값 3
+        postLikeService = newService(3);
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+        given(postLikeRepository.countByPostId(postId)).willReturn(3L);
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then — 설정된 임계값(3)에 도달했으므로 승격되어야 한다
+        assertThat(post.isPopular()).isTrue();
+    }
+
+    @Test
+    void 좋아요_추가로_임계값_10_도달시_게시글_승격됨() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+        given(postLikeRepository.countByPostId(postId)).willReturn(10L);
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        assertThat(post.isPopular()).isTrue();
+        assertThat(post.getPopularAt()).isEqualTo(LocalDateTime.now(FIXED_CLOCK));
+    }
+
+    @Test
+    void 좋아요_추가했지만_임계값_미만이면_승격_안됨() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+        given(postLikeRepository.countByPostId(postId)).willReturn(9L);
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        assertThat(post.isPopular()).isFalse();
+    }
+
+    @Test
+    void 좋아요_추가시_applyLike_호출() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(popularScoreService).applyLike(postId);
+    }
+
+    @Test
+    void 좋아요_취소시_cancelLike_호출() {
+        // given
+        PostLike existingLike = PostLike.of(post, member);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.of(existingLike));
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(popularScoreService).cancelLike(postId);
+    }
+
+    @Test
+    void 좋아요_취소시_승격판정_하지_않음() {
+        // given
+        PostLike existingLike = PostLike.of(post, member);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.of(existingLike));
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        assertThat(post.isPopular()).isFalse();
+        verify(postLikeRepository, never()).countByPostId(any());
     }
 }

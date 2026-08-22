@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fretboard.fretboard.auth.jwt.JwtAuthFilter;
 import com.fretboard.fretboard.auth.jwt.JwtTokenProvider;
 import com.fretboard.fretboard.global.auth.resolver.LoginMemberArgumentResolver;
+import com.fretboard.fretboard.global.datasource.UserContextFilter;
 import com.fretboard.fretboard.global.exception.ExceptionResponseHandler;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
@@ -26,7 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -42,14 +42,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * PostController 슬라이스 테스트.
- * JwtAuthFilter/JwtTokenProvider는 서블릿 필터 계층이므로 @WebMvcTest 컨텍스트에서 제외한다.
+ * JwtAuthFilter/JwtTokenProvider/UserContextFilter는 서블릿 필터 계층이므로 @WebMvcTest 컨텍스트에서 제외한다.
  * LoginMemberArgumentResolver와 ExceptionResponseHandler는 컨트롤러 동작에 필요하므로 명시적으로 임포트한다.
  */
 @WebMvcTest(
         controllers = PostController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
-                classes = {JwtAuthFilter.class, JwtTokenProvider.class}
+                classes = {JwtAuthFilter.class, JwtTokenProvider.class, UserContextFilter.class}
         )
 )
 @Import({LoginMemberArgumentResolver.class, ExceptionResponseHandler.class})
@@ -166,15 +166,73 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("인기글 조회 시 PostFeedService를 통해 반환한다")
-    void getBestPosts_인기글_PostFeedService_통해_반환() throws Exception {
+    @DisplayName("GET /popular 게시판별 인기글 목록 반환")
+    void GET_popular_게시판별_인기글_목록_반환() throws Exception {
         // given
-        given(postFeedService.getMostPosts()).willReturn(List.of());
+        given(postFeedService.getPopularPostsByBoardId(eq(1L), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
 
-        // when & then
-        mockMvc.perform(get("/api/posts/best"))
+        // when & then — /popular?boardId=1 엔드포인트가 아직 없어 404 (RED)
+        mockMvc.perform(get("/api/posts/popular").param("boardId", "1"))
                 .andExpect(status().isOk());
-        verify(postFeedService).getMostPosts();
+        verify(postFeedService).getPopularPostsByBoardId(eq(1L), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("GET /popular boardId가 0이면 400 응답")
+    void GET_popular_boardId가_0이면_400() throws Exception {
+        // given — 검증이 없다면 200으로 성공할 상황을 만든다
+        given(postFeedService.getPopularPostsByBoardId(any(Long.class), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then — boardId=0은 @Positive 위반이므로 400 (RED: 아직 검증 없음)
+        mockMvc.perform(get("/api/posts/popular").param("boardId", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /popular boardId가 음수면 400 응답")
+    void GET_popular_boardId가_음수면_400() throws Exception {
+        // given — 검증이 없다면 200으로 성공할 상황을 만든다
+        given(postFeedService.getPopularPostsByBoardId(any(Long.class), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then — boardId=-5는 @Positive 위반이므로 400 (RED: 아직 검증 없음)
+        mockMvc.perform(get("/api/posts/popular").param("boardId", "-5"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET 게시판목록 boardId가 0이면 400 응답")
+    void GET_게시판목록_boardId가_0이면_400() throws Exception {
+        // given — 검증이 없다면 200으로 성공할 상황을 만든다
+        given(postFeedService.getPostsByBoardId(any(Long.class), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then — boardId=0은 @Positive 위반이므로 400 (RED: 아직 검증 없음)
+        mockMvc.perform(get("/api/posts").param("boardId", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /popular/today 오늘의 인기글 반환")
+    void GET_popular_today_오늘의_인기글_반환() throws Exception {
+        // given
+        given(postFeedService.getTodayPopularPosts())
+                .willReturn(java.util.List.of());
+
+        // when & then — /popular/today 엔드포인트가 아직 없어 404 (RED)
+        mockMvc.perform(get("/api/posts/popular/today"))
+                .andExpect(status().isOk());
+        verify(postFeedService).getTodayPopularPosts();
+    }
+
+    @Test
+    @DisplayName("제거된 /best 엔드포인트 요청 시 404 응답")
+    void getBestPosts_제거된_엔드포인트_404_응답() throws Exception {
+        // when & then — /best 엔드포인트가 제거되어 더 이상 매핑이 존재하지 않는다
+        mockMvc.perform(get("/api/posts/best"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

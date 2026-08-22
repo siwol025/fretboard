@@ -8,6 +8,8 @@ build/
 src/main/resources/application-prod.yml
 src/main/resources/application-dev.yml
 src/main/resources/application-local.yml
+docs/analysis/loadtest/**
+
 .env
 ### STS ###
 .apt_generated

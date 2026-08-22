@@ -4,15 +4,16 @@ import com.fretboard.fretboard.global.auth.annotation.LoginMember;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
+import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
-import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.service.PostFeedService;
 import com.fretboard.fretboard.post.service.PostLikeService;
 import com.fretboard.fretboard.post.service.PostService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts")
+@Validated
 public class PostController {
     private final PostService postService;
     private final PostFeedService postFeedService;
@@ -46,27 +49,34 @@ public class PostController {
     }
 
     @GetMapping(params = "boardId")
-    public ResponseEntity<PostListResponse> getPostsByBoardId(@RequestParam Long boardId,
+    public ResponseEntity<PostListResponse> getPostsByBoardId(@RequestParam @Positive Long boardId,
                                                               @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PostListResponse response = postFeedService.getPostsByBoardId(boardId, pageable);
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping("/popular")
+    public ResponseEntity<PostListResponse> getPopularPostsByBoardId(@RequestParam @Positive Long boardId,
+                                                                     @PageableDefault(size = 10, sort = "popularAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PostListResponse response = postFeedService.getPopularPostsByBoardId(boardId, pageable);
+        return ResponseEntity.ok().body(response);
+    }
+
     @GetMapping(params = {"boardId", "keyword"})
-    public ResponseEntity<PostSearchListResponse> searchPosts(@RequestParam Long boardId,
+    public ResponseEntity<PostSearchListResponse> searchPosts(@RequestParam @Positive Long boardId,
                                                               @RequestParam String keyword,
                                                               @PageableDefault(size = 10) Pageable pageable) {
         PostSearchListResponse response = postFeedService.searchPosts(boardId, keyword, pageable);
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long id,
                                                       @LoginMember(required = false) MemberAuth memberAuth) {
         return ResponseEntity.ok().body(postService.getPostDetail(id, memberAuth));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<Void> updatePostDetails(@PathVariable Long id,
                                            @Valid @RequestBody PostEditRequest postRequest,
                                            @LoginMember MemberAuth memberAuth) {
@@ -74,7 +84,7 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<Void> removePost(@PathVariable Long id,
                                            @LoginMember MemberAuth memberAuth) {
         postService.deletePost(id, memberAuth);
@@ -94,9 +104,9 @@ public class PostController {
         return ResponseEntity.ok().body(response);
     }
 
-    @GetMapping("/best")
-    public ResponseEntity<List<PostSummaryDto>> getBestPosts() {
-        List<PostSummaryDto> response = postFeedService.getMostPosts();
+    @GetMapping("/popular/today")
+    public ResponseEntity<List<PostSummaryDto>> getTodayPopularPosts() {
+        List<PostSummaryDto> response = postFeedService.getTodayPopularPosts();
         return ResponseEntity.ok().body(response);
     }
 }

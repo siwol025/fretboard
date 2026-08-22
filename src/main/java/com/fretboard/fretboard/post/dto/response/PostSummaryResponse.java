@@ -15,14 +15,14 @@ public record PostSummaryResponse(
         String boardTitle,
         int commentCount
 ) {
-    public static PostSummaryResponse of(Post post) {
+    public static PostSummaryResponse of(Post post, int commentCount) {
         return PostSummaryResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .author(post.getMember().getNickname())
                 .createdAt(post.getCreatedAt())
                 .viewCount(post.getViewCount())
-                .commentCount(post.getComments().size())
+                .commentCount(commentCount)
                 .boardId(post.getBoard().getId())
                 .boardTitle(post.getBoard().getTitle())
                 .build();

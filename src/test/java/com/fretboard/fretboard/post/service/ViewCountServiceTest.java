@@ -7,13 +7,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
 
-import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,11 +27,7 @@ class ViewCountServiceTest {
     @Mock
     private HashOperations<String, Object, Object> hashOps;
 
-    @Mock
-    private ZSetOperations<String, Object> zSetOps;
-
     private static final String VIEW_COUNT_KEY = "post:viewCount";
-    private static final String POPULAR_KEY = "popular:posts";
 
     @Test
     void setInitialViewCount_호출시_hash_put_실행() {
@@ -49,10 +44,9 @@ class ViewCountServiceTest {
     }
 
     @Test
-    void incrementViewCount_호출시_hash_increment_및_zset_score_증가() {
+    void incrementViewCount_호출시_hash만_증분하고_zset은_건드리지_않음() {
         // given
         Long postId = 1L;
-        given(redisTemplate.opsForZSet()).willReturn(zSetOps);
         given(redisTemplate.opsForHash()).willReturn(hashOps);
         given(hashOps.increment(VIEW_COUNT_KEY, postId.toString(), 1)).willReturn(1L);
 
@@ -60,23 +54,8 @@ class ViewCountServiceTest {
         viewCountService.incrementViewCount(postId);
 
         // then
-        verify(zSetOps).incrementScore(POPULAR_KEY, postId, 1);
         verify(hashOps).increment(VIEW_COUNT_KEY, postId.toString(), 1);
-        verify(redisTemplate).expire(org.mockito.ArgumentMatchers.eq(POPULAR_KEY),
-                org.mockito.ArgumentMatchers.any(java.time.Duration.class));
-    }
-
-    @Test
-    void getTopPosts_결과없으면_빈_리스트_반환() {
-        // given
-        given(redisTemplate.opsForZSet()).willReturn(zSetOps);
-        given(zSetOps.reverseRange(POPULAR_KEY, 0, 9)).willReturn(null);
-
-        // when
-        List<Long> result = viewCountService.getTopPosts(10);
-
-        // then
-        assertThat(result).isEqualTo(List.of());
+        verify(redisTemplate, never()).opsForZSet();
     }
 
     @Test

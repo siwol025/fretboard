@@ -1,7 +1,7 @@
 package com.fretboard.fretboard.post.dto.response;
 
 import com.fretboard.fretboard.comment.dto.response.CommentResponse;
-import com.fretboard.fretboard.post.domain.Post;
+import com.fretboard.fretboard.post.dto.PostStaticView;
 import java.time.LocalDateTime;
 import lombok.Builder;
 
@@ -20,18 +20,23 @@ public record PostDetailResponse(
         Long likeCount,
         Boolean isLiked
 ) {
-    public static PostDetailResponse of(Post post, Long viewCount, Long likeCount, Boolean isLiked) {
+    public static PostDetailResponse of(
+            PostStaticView staticView,
+            Long viewCount,
+            Long likeCount,
+            Boolean isLiked,
+            CommentResponse commentResponse) {
         return PostDetailResponse.builder()
-                .id(post.getId())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .authorId(post.getMember().getId())
-                .author(post.getMember().getNickname())
-                .createdAt(post.getCreatedAt())
+                .id(staticView.id())
+                .title(staticView.title())
+                .content(staticView.content())
+                .authorId(staticView.authorId())
+                .author(staticView.author())
+                .createdAt(staticView.createdAt())
                 .viewCount(viewCount)
-                .commentResponse(CommentResponse.createByComments(post.getComments()))
-                .boardId(post.getBoard().getId())
-                .boardTitle(post.getBoard().getTitle())
+                .commentResponse(commentResponse)
+                .boardId(staticView.boardId())
+                .boardTitle(staticView.boardTitle())
                 .likeCount(likeCount)
                 .isLiked(isLiked)
                 .build();

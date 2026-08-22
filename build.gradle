@@ -30,6 +30,7 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	// Testcontainers — 실제 MySQL 엔진 대상 통합 테스트 전용(H2 가 놓치는 MySQL 비호환 검증)
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'

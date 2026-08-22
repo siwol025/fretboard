@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -57,6 +58,9 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private Long viewCount = 0L;
 
+    @Column(name = "popular_at")
+    private LocalDateTime popularAt;
+
     @Builder
     public Post(String title, String content, Member member, Board board, Long viewCount) {
         this.title = title;
@@ -73,5 +77,15 @@ public class Post extends BaseEntity {
 
     public void addComment(final Comment comment) {
         comments.add(comment);
+    }
+
+    public boolean isPopular() {
+        return popularAt != null;
+    }
+
+    public void promote(LocalDateTime now) {
+        if (popularAt == null) {
+            popularAt = now;
+        }
     }
 }

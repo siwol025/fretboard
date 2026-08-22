@@ -13,6 +13,8 @@ services:
       - .env
     depends_on:
       - redis
+      - mysql-primary
+      - mysql-replica
 
   redis:
     image: redis:7-alpine
@@ -20,3 +22,75 @@ services:
     ports:
       - "6379:6379"
     restart: always
+
+  # --- 쓰기 DB (source) ---
+  mysql-primary:
+    image: mysql:8.4
+    container_name: fretboard-mysql-primary
+    environment:
+      MYSQL_ROOT_PASSWORD: fretboard
+      MYSQL_DATABASE: fretboard          # replica 는 이 DB 를 복제로 수급(로컬 생성 안 함)
+    ports:
+      - "3307:3306"                      # host 3306 은 로컬 네이티브 MySQL 점유 → 3307 로 공존
+    volumes:
+      - mysql-primary-data:/var/lib/mysql
+      - ./docker/mysql/primary/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./docker/mysql/primary-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    restart: always
+
+  # --- 읽기 DB (replica) ---
+  mysql-replica:
+    image: mysql:8.4
+    container_name: fretboard-mysql-replica
+    environment:
+      MYSQL_ROOT_PASSWORD: fretboard     # MYSQL_DATABASE 미지정: 스키마는 복제로 수급
+    ports:
+      - "3309:3306"                      # host 3309 → container 3306 (3308 은 기존 fretboard-perf 점유)
+    volumes:
+      - mysql-replica-data:/var/lib/mysql
+      - ./docker/mysql/replica/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./docker/mysql/replica-init:/docker-entrypoint-initdb.d:ro
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    restart: always
+
+  # --- 분석/집계 DB (analytics replica) : 워크로드 격리 전용 읽기 노드 ---
+  mysql-analytics:
+    image: mysql:8.4
+    container_name: fretboard-mysql-analytics
+    environment:
+      MYSQL_ROOT_PASSWORD: fretboard     # MYSQL_DATABASE 미지정: 스키마는 복제로 수급
+    ports:
+      - "3310:3306"                      # host 3310 → container 3306 (3307 primary, 3309 replica, 3308 perf 점유)
+    volumes:
+      - mysql-analytics-data:/var/lib/mysql
+      - ./docker/mysql/analytics/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./docker/mysql/analytics-init:/docker-entrypoint-initdb.d:ro
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    restart: always
+
+volumes:
+  mysql-primary-data:
+  mysql-replica-data:
+  mysql-analytics-data:

@@ -1,6 +1,10 @@
 package com.fretboard.fretboard.post.service;
 
+import com.fretboard.fretboard.board.domain.Board;
+import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.common.CacheKey;
+import com.fretboard.fretboard.global.datasource.Analytics;
+import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
 import com.fretboard.fretboard.post.dto.PostSummaryDto;
@@ -9,6 +13,7 @@ import com.fretboard.fretboard.post.dto.response.PostListResponse;
 import com.fretboard.fretboard.post.dto.response.PostSearchListResponse;
 import com.fretboard.fretboard.post.dto.response.RecentPostsPerBoardResponse;
 import com.fretboard.fretboard.post.repository.PostRepository;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +35,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostFeedService {
 
     private final PostRepository postRepository;
+    private final BoardRepository boardRepository;
     private final CommentCountLoader commentCountLoader;
-    private final ViewCountService viewCountService;
+    private final PopularScoreService popularScoreService;
+    private final com.fretboard.fretboard.global.config.PopularProperties popularProperties;
+
+    @Analytics
+    @Cacheable(
+            cacheNames = CacheKey.POPULAR_TODAY,
+            key = CacheKey.POPULAR_TODAY_KEY,
+            cacheManager = CacheKey.CACHE_MANAGER
+    )
+    public List<PostSummaryDto> getTodayPopularPosts() {
+        List<Long> ids = popularScoreService.getTopPostIds(popularProperties.todayLimit());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        List<PostSummaryDto> posts = postRepository.findByPostIds(ids);
+        Map<Long, PostSummaryDto> postById = posts.stream()
+                .collect(Collectors.toMap(PostSummaryDto::id, Function.identity()));
+
+        return ids.stream()
+                .map(postById::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
 
     public PostListResponse getPostsByBoardId(final Long boardId, Pageable pageable) {
         long offset = (long) pageable.getPageNumber() * pageable.getPageSize();
@@ -38,6 +68,24 @@ public class PostFeedService {
                 boardId, pageable.getPageSize(), offset);
         long totalElements = postRepository.countByBoardId(boardId);
 
+        return assemblePostList(posts, totalElements, pageable);
+    }
+
+    @Cacheable(
+            cacheNames = CacheKey.POPULAR_BY_BOARD,
+            key = CacheKey.POPULAR_BY_BOARD_KEY,
+            cacheManager = CacheKey.CACHE_MANAGER
+    )
+    public PostListResponse getPopularPostsByBoardId(final Long boardId, Pageable pageable) {
+        long offset = (long) pageable.getPageNumber() * pageable.getPageSize();
+        List<PostSummaryDto> posts = postRepository.findPopularPostSummaryByBoardId(
+                boardId, pageable.getPageSize(), offset);
+        long totalElements = postRepository.countPopularByBoardId(boardId);
+
+        return assemblePostList(posts, totalElements, pageable);
+    }
+
+    private PostListResponse assemblePostList(List<PostSummaryDto> posts, long totalElements, Pageable pageable) {
         List<Long> postIds = posts.stream()
                 .map(PostSummaryDto::id)
                 .toList();
@@ -61,6 +109,7 @@ public class PostFeedService {
         return PostListResponse.of(resultPage);
     }
 
+    @Analytics
     public PostSearchListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
         Page<PostSearchResultProjection> posts = postRepository.searchByBoardIdAndKeyword(
                 boardId, keyword, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
@@ -90,25 +139,33 @@ public class PostFeedService {
         return PostSearchListResponse.of(resultPage);
     }
 
-    public List<PostSummaryDto> getMostPosts() {
-        List<Long> topPosts = viewCountService.getTopPosts(5);
-        List<PostSummaryDto> posts = postRepository.findByPostIds(topPosts);
-
-        Map<Long, PostSummaryDto> postMap = posts.stream()
-                .collect(Collectors.toMap(PostSummaryDto::id, Function.identity()));
-
-        return topPosts.stream()
-                .map(postMap::get)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
+    @Analytics
     @Cacheable(
             cacheNames = CacheKey.RECENT_POSTS,
             key = CacheKey.RECENT_POSTS_KEY,
-            cacheManager = "postCacheManager"
+            cacheManager = CacheKey.CACHE_MANAGER
     )
     public List<RecentPostsPerBoardResponse> getRecentPosts() {
-        return RecentPostsPerBoardResponse.of(postRepository.findRecentPostsPerBoards());
+        List<Board> boards = boardRepository.findAll(Sort.by("id"));
+
+        Map<Board, List<Post>> postsByBoard = new LinkedHashMap<>();
+        for (Board board : boards) {
+            List<Post> posts = postRepository.findTop5ByBoardIdOrderByRecency(board.getId());
+            if (!posts.isEmpty()) {
+                postsByBoard.put(board, posts);
+            }
+        }
+
+        List<Long> postIds = postsByBoard.values().stream()
+                .flatMap(List::stream)
+                .map(Post::getId)
+                .toList();
+
+        Map<Long, Long> commentCountMap = commentCountLoader.load(postIds);
+
+        return postsByBoard.entrySet().stream()
+                .map(entry -> RecentPostsPerBoardResponse.of(
+                        entry.getKey(), entry.getValue(), commentCountMap))
+                .toList();
     }
 }

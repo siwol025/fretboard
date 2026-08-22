@@ -7,6 +7,7 @@ import com.fretboard.fretboard.post.dto.PostSummaryDto;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -55,6 +56,46 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     long countByBoardId(Long boardId);
 
+    default List<PostSummaryDto> findPopularPostSummaryByBoardId(Long boardId, int size, long offset) {
+        return findPopularPostSummaryByBoardIdRaw(boardId, size, offset).stream()
+                .map(PostSummaryRowMapper::map)
+                .toList();
+    }
+
+    /*
+     * 게시판별 인기글(승격글) 목록: popular_at IS NOT NULL 인 글만 popular_at DESC 로 정렬해 페이징한다.
+     * SELECT 컬럼 순서는 findPostSummaryByBoardIdDeferredRaw 와 동일하게
+     * (id, title, nickname, created_at, view_count) 을 유지해 PostSummaryRowMapper 를 공유한다.
+     */
+    @Query(
+            value = """
+                SELECT p.id, p.title, m.nickname, p.created_at, p.view_count
+                FROM post p
+                JOIN member m ON m.id = p.member_id
+                WHERE p.board_id = :boardId
+                  AND p.popular_at IS NOT NULL
+                ORDER BY p.popular_at DESC
+                LIMIT :size OFFSET :offset
+                """,
+            nativeQuery = true
+    )
+    List<Object[]> findPopularPostSummaryByBoardIdRaw(
+            @Param("boardId") Long boardId,
+            @Param("size") int size,
+            @Param("offset") long offset
+    );
+
+    @Query(
+            value = """
+                SELECT COUNT(*)
+                FROM post
+                WHERE board_id = :boardId
+                  AND popular_at IS NOT NULL
+                """,
+            nativeQuery = true
+    )
+    long countPopularByBoardId(@Param("boardId") Long boardId);
+
     default List<MyPostSummaryDto> findMyPostSummaryDeferred(Long memberId, int size, long offset) {
         return findMyPostSummaryDeferredRaw(memberId, size, offset).stream()
                 .map(MyPostSummaryRowMapper::map)
@@ -91,19 +132,23 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     long countByMemberId(Long memberId);
 
-    @Query(
-            value = """
-                SELECT p.*
-                FROM (
-                    SELECT p.*, ROW_NUMBER() OVER (PARTITION BY board_id ORDER BY p.created_at DESC) AS rn
-                    FROM post p
-                ) p
-                WHERE p.rn <= 5
-                ORDER BY p.board_id, p.rn
-            """,
-            nativeQuery = true
-    )
-    List<Post> findRecentPostsPerBoards();
+    /*
+     * 특정 board 의 최신 게시글 top-5 를 created_at DESC, id DESC 로 반환한다.
+     * member/board 는 단일 연관(ManyToOne)이므로 join fetch + 행 제한을 함께 써도
+     * in-memory paging 문제가 없다. 행 제한은 PageRequest.of(0, 5) 로 캡한다.
+     */
+    default List<Post> findTop5ByBoardIdOrderByRecency(Long boardId) {
+        return findTop5ByBoardIdOrderByRecency(boardId, PageRequest.of(0, 5));
+    }
+
+    @Query("""
+                SELECT p FROM Post p
+                JOIN FETCH p.member
+                JOIN FETCH p.board
+                WHERE p.board.id = :boardId
+                ORDER BY p.createdAt DESC, p.id DESC
+            """)
+    List<Post> findTop5ByBoardIdOrderByRecency(@Param("boardId") Long boardId, Pageable pageable);
 
     @Query(
             value = """
