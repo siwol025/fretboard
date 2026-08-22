@@ -1,6 +1,9 @@
 package com.fretboard.fretboard.global.common;
 
 public class CacheKey {
+    // 캐시 매니저 빈 이름. RedisCacheConfig#postCacheManager 빈 이름과 반드시 일치해야 한다.
+    public static final String CACHE_MANAGER = "postCacheManager";
+
     // 기존: 최근 게시글
     public static final String RECENT_POSTS = "recentPosts";
     public static final String RECENT_POSTS_KEY = "'all'";

@@ -59,7 +59,7 @@ public class RedisCacheConfig implements CachingConfigurer {
         };
     }
 
-    @Bean
+    @Bean(CacheKey.CACHE_MANAGER)
     public CacheManager postCacheManager(RedisConnectionFactory redisConnectionFactory) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());

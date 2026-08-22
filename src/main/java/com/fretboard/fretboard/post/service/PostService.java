@@ -61,8 +61,8 @@ public class PostService {
     }
 
     @Caching(evict = {
-            @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY),
-            @CacheEvict(cacheNames = CacheKey.POST_DETAIL, key = "#id", cacheManager = "postCacheManager")
+            @CacheEvict(cacheNames = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY, cacheManager = CacheKey.CACHE_MANAGER),
+            @CacheEvict(cacheNames = CacheKey.POST_DETAIL, key = "#id", cacheManager = CacheKey.CACHE_MANAGER)
     })
     @Transactional
     public void updatePost(final Long id, final PostEditRequest request, final MemberAuth memberAuth) {
@@ -78,8 +78,8 @@ public class PostService {
     }
 
     @Caching(evict = {
-            @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY),
-            @CacheEvict(cacheNames = CacheKey.POST_DETAIL, key = "#id", cacheManager = "postCacheManager")
+            @CacheEvict(cacheNames = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY, cacheManager = CacheKey.CACHE_MANAGER),
+            @CacheEvict(cacheNames = CacheKey.POST_DETAIL, key = "#id", cacheManager = CacheKey.CACHE_MANAGER)
     })
     @Transactional
     public void deletePost(final Long id, final MemberAuth memberAuth) {

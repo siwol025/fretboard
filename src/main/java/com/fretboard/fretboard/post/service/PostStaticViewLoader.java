@@ -23,7 +23,7 @@ public class PostStaticViewLoader {
 
     private final PostRepository postRepository;
 
-    @Cacheable(cacheNames = CacheKey.POST_DETAIL, key = CacheKey.POST_DETAIL_KEY, cacheManager = "postCacheManager")
+    @Cacheable(cacheNames = CacheKey.POST_DETAIL, key = CacheKey.POST_DETAIL_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     public PostStaticView load(final Long postId) {
         Post post = postRepository.findPostDetailById(postId)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));

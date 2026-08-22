@@ -35,7 +35,7 @@ public class CommentService {
     private final CacheManager cacheManager;
 
     @Transactional
-    @CacheEvict(cacheNames = CacheKey.COMMENTS, key = CacheKey.COMMENTS_KEY, cacheManager = "postCacheManager")
+    @CacheEvict(cacheNames = CacheKey.COMMENTS, key = CacheKey.COMMENTS_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     public Long addComment(final Long postId, final CommentRequest commentRequest, final MemberAuth memberAuth) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
@@ -49,7 +49,7 @@ public class CommentService {
         return comment.getId();
     }
 
-    @Cacheable(cacheNames = CacheKey.COMMENTS, key = CacheKey.COMMENTS_KEY, cacheManager = "postCacheManager")
+    @Cacheable(cacheNames = CacheKey.COMMENTS, key = CacheKey.COMMENTS_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     public CommentResponse findComments(final Long postId) {
         List<Comment> comments = commentRepository.findCommentsByPostIdWithMember(postId);
 
@@ -73,6 +73,8 @@ public class CommentService {
         evictComments(comment.getPost().getId());
     }
 
+    // editComment/deleteComment는 postId가 파라미터에 없어(comment에서 해석) 선언적 @CacheEvict의
+    // SpEL 키를 쓸 수 없다. 따라서 해석한 postId로 프로그래매틱하게 evict한다.
     private void evictComments(final Long postId) {
         Cache cache = cacheManager.getCache(CacheKey.COMMENTS);
         if (cache != null) {

@@ -27,7 +27,7 @@ public class BoardService {
     private final AuthorizationHelper authorizationHelper;
 
     @Transactional
-    @CacheEvict(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = "postCacheManager")
+    @CacheEvict(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     public Long createBoard(final BoardRequest request, final MemberAuth memberAuth) {
         requireAdmin(memberAuth);
         Board saveBoard = boardRepository.save(request.toBoard());
@@ -36,8 +36,8 @@ public class BoardService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = "postCacheManager"),
-            @CacheEvict(cacheNames = CacheKey.BOARD, key = CacheKey.BOARD_KEY, cacheManager = "postCacheManager")
+            @CacheEvict(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = CacheKey.CACHE_MANAGER),
+            @CacheEvict(cacheNames = CacheKey.BOARD, key = CacheKey.BOARD_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     })
     public void editBoard(final Long id, final BoardRequest request, final MemberAuth memberAuth) {
         requireAdmin(memberAuth);
@@ -47,8 +47,8 @@ public class BoardService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = "postCacheManager"),
-            @CacheEvict(cacheNames = CacheKey.BOARD, key = CacheKey.BOARD_KEY, cacheManager = "postCacheManager")
+            @CacheEvict(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = CacheKey.CACHE_MANAGER),
+            @CacheEvict(cacheNames = CacheKey.BOARD, key = CacheKey.BOARD_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     })
     public void deleteBoard(final Long id, final MemberAuth memberAuth) {
         requireAdmin(memberAuth);
@@ -63,7 +63,7 @@ public class BoardService {
         }
     }
 
-    @Cacheable(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = "postCacheManager")
+    @Cacheable(cacheNames = CacheKey.BOARDS, key = CacheKey.BOARDS_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     public BoardListResponse findBoards() {
         List<BoardElementResponse> contents = boardRepository.findAll().stream()
                 .map(BoardElementResponse::of)
@@ -71,7 +71,7 @@ public class BoardService {
         return new BoardListResponse(contents);
     }
 
-    @Cacheable(cacheNames = CacheKey.BOARD, key = CacheKey.BOARD_KEY, cacheManager = "postCacheManager")
+    @Cacheable(cacheNames = CacheKey.BOARD, key = CacheKey.BOARD_KEY, cacheManager = CacheKey.CACHE_MANAGER)
     public BoardElementResponse findBoard(final Long id) {
         return BoardElementResponse.of(findBoardEntity(id));
     }
