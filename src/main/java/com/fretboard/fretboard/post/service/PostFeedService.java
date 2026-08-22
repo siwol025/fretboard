@@ -40,6 +40,12 @@ public class PostFeedService {
     private final PopularScoreService popularScoreService;
     private final com.fretboard.fretboard.global.config.PopularProperties popularProperties;
 
+    @Analytics
+    @Cacheable(
+            cacheNames = CacheKey.POPULAR_TODAY,
+            key = CacheKey.POPULAR_TODAY_KEY,
+            cacheManager = "postCacheManager"
+    )
     public List<PostSummaryDto> getTodayPopularPosts() {
         List<Long> ids = popularScoreService.getTopPostIds(popularProperties.todayLimit());
         if (ids.isEmpty()) {
@@ -65,6 +71,11 @@ public class PostFeedService {
         return assemblePostList(posts, totalElements, pageable);
     }
 
+    @Cacheable(
+            cacheNames = CacheKey.POPULAR_BY_BOARD,
+            key = CacheKey.POPULAR_BY_BOARD_KEY,
+            cacheManager = "postCacheManager"
+    )
     public PostListResponse getPopularPostsByBoardId(final Long boardId, Pageable pageable) {
         long offset = (long) pageable.getPageNumber() * pageable.getPageSize();
         List<PostSummaryDto> posts = postRepository.findPopularPostSummaryByBoardId(

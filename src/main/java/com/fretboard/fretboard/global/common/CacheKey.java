@@ -27,5 +27,6 @@ public class CacheKey {
     public static final String POPULAR_TODAY = "popularToday";
     public static final String POPULAR_TODAY_KEY = "'all'";
     public static final String POPULAR_BY_BOARD = "popularByBoard";
+    public static final String POPULAR_BY_BOARD_KEY = "#boardId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize";
     public static final long POPULAR_TTL_SECONDS = 60L;
 }
