@@ -10,8 +10,11 @@ import com.fretboard.fretboard.global.utils.AuthorizationHelper;
 import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.member.domain.Role;
+import com.fretboard.fretboard.comment.dto.response.CommentResponse;
+import com.fretboard.fretboard.comment.service.CommentService;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.MyPostSummaryDto;
+import com.fretboard.fretboard.post.dto.PostStaticView;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
 import com.fretboard.fretboard.post.dto.response.MyPostListResponse;
@@ -75,6 +78,12 @@ class PostServiceTest {
 
     @Mock
     private PopularScoreService popularScoreService;
+
+    @Mock
+    private PostStaticViewLoader postStaticViewLoader;
+
+    @Mock
+    private CommentService commentService;
 
     private Member member;
 
@@ -289,11 +298,12 @@ class PostServiceTest {
         MemberAuth memberAuth = new MemberAuth(10L);
         Post post = createPostWithId(postId);
 
-        given(postRepository.findPostDetailById(postId)).willReturn(Optional.of(post));
+        given(postStaticViewLoader.load(postId)).willReturn(PostStaticView.from(post));
         given(viewCountService.hasViewCount(postId)).willReturn(true);
         given(viewCountService.incrementViewCount(postId)).willReturn(5L);
         given(postLikeRepository.countByPostId(postId)).willReturn(3L);
         given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(true);
+        given(commentService.findComments(postId)).willReturn(new CommentResponse(List.of()));
 
         // when
         PostDetailResponse response = postService.getPostDetail(postId, memberAuth);
@@ -304,23 +314,24 @@ class PostServiceTest {
     }
 
     @Test
-    void getPostDetail_findById_대신_findPostDetailById_호출됨() {
+    void getPostDetail_정적본문로더로_소싱하고_findById는_호출안됨() {
         // given
         Long postId = 1L;
         MemberAuth memberAuth = new MemberAuth(10L);
         Post post = createPostWithId(postId);
 
-        given(postRepository.findPostDetailById(postId)).willReturn(Optional.of(post));
+        given(postStaticViewLoader.load(postId)).willReturn(PostStaticView.from(post));
         given(viewCountService.hasViewCount(postId)).willReturn(true);
         given(viewCountService.incrementViewCount(postId)).willReturn(1L);
         given(postLikeRepository.countByPostId(postId)).willReturn(0L);
         given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(false);
+        given(commentService.findComments(postId)).willReturn(new CommentResponse(List.of()));
 
         // when
         postService.getPostDetail(postId, memberAuth);
 
-        // then — findPostDetailById 가 호출되고 findById 는 호출되지 않아야 한다
-        verify(postRepository).findPostDetailById(postId);
+        // then — 정적 본문은 캐시 가능한 로더로 소싱되고 findById 는 호출되지 않아야 한다
+        verify(postStaticViewLoader).load(postId);
         verify(postRepository, org.mockito.Mockito.never()).findById(postId);
     }
 
@@ -374,11 +385,12 @@ class PostServiceTest {
         MemberAuth memberAuth = new MemberAuth(10L);
         Post post = createPostWithId(postId);
 
-        given(postRepository.findPostDetailById(postId)).willReturn(Optional.of(post));
+        given(postStaticViewLoader.load(postId)).willReturn(PostStaticView.from(post));
         given(viewCountService.hasViewCount(postId)).willReturn(true);
         given(viewCountService.incrementViewCount(postId)).willReturn(1L);
         given(postLikeRepository.countByPostId(postId)).willReturn(0L);
         given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(false);
+        given(commentService.findComments(postId)).willReturn(new CommentResponse(List.of()));
 
         // when
         postService.getPostDetail(postId, memberAuth);

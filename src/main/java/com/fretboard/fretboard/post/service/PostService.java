@@ -2,6 +2,8 @@ package com.fretboard.fretboard.post.service;
 
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.repository.BoardRepository;
+import com.fretboard.fretboard.comment.dto.response.CommentResponse;
+import com.fretboard.fretboard.comment.service.CommentService;
 import com.fretboard.fretboard.global.auth.dto.MemberAuth;
 import com.fretboard.fretboard.global.common.CacheKey;
 import com.fretboard.fretboard.global.exception.ExceptionType;
@@ -11,6 +13,7 @@ import com.fretboard.fretboard.image.service.ImageService;
 import com.fretboard.fretboard.member.domain.Member;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.MyPostSummaryDto;
+import com.fretboard.fretboard.post.dto.PostStaticView;
 import com.fretboard.fretboard.post.dto.request.PostEditRequest;
 import com.fretboard.fretboard.post.dto.response.PostDetailResponse;
 import com.fretboard.fretboard.post.dto.request.PostNewRequest;
@@ -22,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +44,8 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final CommentCountLoader commentCountLoader;
     private final PopularScoreService popularScoreService;
+    private final PostStaticViewLoader postStaticViewLoader;
+    private final CommentService commentService;
 
     @Transactional
     public Long addPost(final PostNewRequest request, final MemberAuth memberAuth) {
@@ -54,7 +60,10 @@ public class PostService {
         return savedPost.getId();
     }
 
-    @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY)
+    @Caching(evict = {
+            @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY),
+            @CacheEvict(cacheNames = CacheKey.POST_DETAIL, key = "#id", cacheManager = "postCacheManager")
+    })
     @Transactional
     public void updatePost(final Long id, final PostEditRequest request, final MemberAuth memberAuth) {
         Post post = postRepository.findById(id)
@@ -68,7 +77,10 @@ public class PostService {
         post.edit(request.title(), convertedContent);
     }
 
-    @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY)
+    @Caching(evict = {
+            @CacheEvict(value = CacheKey.RECENT_POSTS, key = CacheKey.RECENT_POSTS_KEY),
+            @CacheEvict(cacheNames = CacheKey.POST_DETAIL, key = "#id", cacheManager = "postCacheManager")
+    })
     @Transactional
     public void deletePost(final Long id, final MemberAuth memberAuth) {
         Post post = postRepository.findById(id)
@@ -82,20 +94,24 @@ public class PostService {
     }
 
     public PostDetailResponse getPostDetail(final Long id, final MemberAuth memberAuth) {
-        Post post = postRepository.findPostDetailById(id)
-                .orElseThrow(() -> new FretBoardException(ExceptionType.POST_NOT_FOUND));
+        PostStaticView staticView = postStaticViewLoader.load(id);
 
-        if (!viewCountService.hasViewCount(id)) {
-            viewCountService.setInitialViewCount(id, post.getViewCount());
-        }
-
+        ensureViewCountSeeded(id, staticView.baseViewCount());
         Long updatedViewCount = viewCountService.incrementViewCount(id);
         popularScoreService.applyView(id);
 
         long likeCount = postLikeRepository.countByPostId(id);
         boolean isLiked = memberAuth != null && postLikeRepository.existsByPostIdAndMemberId(id, memberAuth.memberId());
 
-        return PostDetailResponse.of(post, updatedViewCount, likeCount, isLiked);
+        CommentResponse commentResponse = commentService.findComments(id);
+
+        return PostDetailResponse.of(staticView, updatedViewCount, likeCount, isLiked, commentResponse);
+    }
+
+    private void ensureViewCountSeeded(final Long id, final Long baseViewCount) {
+        if (!viewCountService.hasViewCount(id)) {
+            viewCountService.setInitialViewCount(id, baseViewCount);
+        }
     }
 
     public MyPostListResponse findMyPosts(final MemberAuth memberAuth, Pageable pageable) {

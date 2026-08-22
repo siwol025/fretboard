@@ -1,5 +1,6 @@
 package com.fretboard.fretboard.global.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -63,6 +64,12 @@ public class RedisCacheConfig implements CachingConfigurer {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // 커스텀 ObjectMapper를 넘기면 GenericJackson2JsonRedisSerializer의 기본 타입 활성화가 적용되지 않는다.
+        // @class 타입 정보를 함께 직렬화해야 record/DTO를 원래 타입으로 역직렬화할 수 있다(그렇지 않으면 LinkedHashMap).
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY);
 
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
