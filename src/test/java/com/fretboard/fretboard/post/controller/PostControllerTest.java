@@ -179,6 +179,42 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("GET /popular boardId가 0이면 400 응답")
+    void GET_popular_boardId가_0이면_400() throws Exception {
+        // given — 검증이 없다면 200으로 성공할 상황을 만든다
+        given(postFeedService.getPopularPostsByBoardId(any(Long.class), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then — boardId=0은 @Positive 위반이므로 400 (RED: 아직 검증 없음)
+        mockMvc.perform(get("/api/posts/popular").param("boardId", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /popular boardId가 음수면 400 응답")
+    void GET_popular_boardId가_음수면_400() throws Exception {
+        // given — 검증이 없다면 200으로 성공할 상황을 만든다
+        given(postFeedService.getPopularPostsByBoardId(any(Long.class), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then — boardId=-5는 @Positive 위반이므로 400 (RED: 아직 검증 없음)
+        mockMvc.perform(get("/api/posts/popular").param("boardId", "-5"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET 게시판목록 boardId가 0이면 400 응답")
+    void GET_게시판목록_boardId가_0이면_400() throws Exception {
+        // given — 검증이 없다면 200으로 성공할 상황을 만든다
+        given(postFeedService.getPostsByBoardId(any(Long.class), any(Pageable.class)))
+                .willReturn(PostListResponse.of(Page.empty()));
+
+        // when & then — boardId=0은 @Positive 위반이므로 400 (RED: 아직 검증 없음)
+        mockMvc.perform(get("/api/posts").param("boardId", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("GET /popular/today 오늘의 인기글 반환")
     void GET_popular_today_오늘의_인기글_반환() throws Exception {
         // given
