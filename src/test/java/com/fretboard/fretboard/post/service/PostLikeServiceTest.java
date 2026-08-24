@@ -224,4 +224,34 @@ class PostLikeServiceTest {
         assertThat(post.isPopular()).isFalse();
         verify(postLikeRepository, never()).countByPostId(any());
     }
+
+    @Test
+    void 좋아요_추가시_incrementLikeCount_호출() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(postRepository).incrementLikeCount(postId);
+    }
+
+    @Test
+    void 좋아요_취소시_decrementLikeCount_호출() {
+        // given
+        PostLike existingLike = PostLike.of(post, member);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.of(existingLike));
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(postRepository).decrementLikeCount(postId);
+    }
 }

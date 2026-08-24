@@ -58,6 +58,9 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private Long viewCount = 0L;
 
+    @Column(nullable = false)
+    private Long likeCount = 0L;
+
     @Column(name = "popular_at")
     private LocalDateTime popularAt;
 

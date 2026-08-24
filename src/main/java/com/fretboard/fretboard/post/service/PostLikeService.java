@@ -37,10 +37,12 @@ public class PostLikeService {
         Optional<PostLike> existingLike = postLikeRepository.findByPostIdAndMemberId(postId, memberAuth.memberId());
         if (existingLike.isEmpty()) {
             postLikeRepository.save(PostLike.of(post, member));
+            postRepository.incrementLikeCount(postId);
             promoteIfPopular(post, postId);
             popularScoreService.applyLike(postId);
         } else {
             postLikeRepository.delete(existingLike.get());
+            postRepository.decrementLikeCount(postId);
             popularScoreService.cancelLike(postId);
         }
     }

@@ -187,6 +187,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("UPDATE Post p SET p.viewCount = :viewCount WHERE p.id = :postId")
     void updateViewCount(@Param("postId") Long postId, @Param("viewCount") Long viewCount);
 
+    @Modifying
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId")
+    void incrementLikeCount(@Param("postId") Long postId);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId")
+    void decrementLikeCount(@Param("postId") Long postId);
+
     @Query("""
                 SELECT p FROM Post p
                 JOIN FETCH p.member
@@ -196,4 +204,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 WHERE p.id = :id
             """)
     Optional<Post> findPostDetailById(@Param("id") Long id);
+
+    @Query("SELECT p.likeCount FROM Post p WHERE p.id = :postId")
+    Long findLikeCountById(@Param("postId") Long postId);
 }
