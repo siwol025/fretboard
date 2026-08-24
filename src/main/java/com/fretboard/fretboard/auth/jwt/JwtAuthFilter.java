@@ -30,20 +30,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      */
     public static final String MEMBER_ID_ATTRIBUTE = "memberId";
 
-    /**
-     * Request attribute used to hand off an already-decoded member id from the earlier
-     * {@link com.fretboard.fretboard.global.datasource.UserContextFilter} to this filter,
-     * so a valid JWT is decoded exactly once across the whole filter chain.
-     *
-     * <p>Kept DISTINCT from {@link #MEMBER_ID_ATTRIBUTE}: this key is an internal
-     * single-decode optimization cache, whereas {@code MEMBER_ID_ATTRIBUTE} is the
-     * authentication contract exposed to downstream handlers and must only be populated
-     * on protected paths (never on whitelisted read paths, where UserContextFilter still
-     * populates this cache). Collapsing the two would leak the member id onto whitelisted
-     * paths and break that distinction.
-     */
-    public static final String DECODED_MEMBER_ID_CACHE_ATTRIBUTE = "decodedMemberId";
-
     private final ObjectMapper objectMapper;
     private final JwtTokenProvider tokenProvider;
     private final List<HttpRequestInfo> whiteList;
@@ -77,11 +63,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         token = token.substring(7);
         try {
-            // Reuse the id already decoded by UserContextFilter if present; only decode
-            // here as a fallback. Do NOT simplify to an unconditional decode -- that would
-            // decode the same valid JWT twice within one request.
-            Object cached = request.getAttribute(DECODED_MEMBER_ID_CACHE_ATTRIBUTE);
-            String memberId = (cached != null) ? (String) cached : tokenProvider.decodeAccessToken(token);
+            String memberId = tokenProvider.decodeAccessToken(token);
             request.setAttribute(MEMBER_ID_ATTRIBUTE, memberId);
             filterChain.doFilter(request, response);
         } catch (ServletException e) {

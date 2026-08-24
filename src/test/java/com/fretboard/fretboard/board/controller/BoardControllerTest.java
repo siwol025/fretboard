@@ -9,7 +9,6 @@ import com.fretboard.fretboard.board.dto.response.BoardListResponse;
 import com.fretboard.fretboard.board.domain.BoardType;
 import com.fretboard.fretboard.board.service.BoardService;
 import com.fretboard.fretboard.global.auth.resolver.LoginMemberArgumentResolver;
-import com.fretboard.fretboard.global.datasource.UserContextFilter;
 import com.fretboard.fretboard.global.exception.ExceptionResponseHandler;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
@@ -40,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         controllers = BoardController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
-                classes = {JwtAuthFilter.class, JwtTokenProvider.class, UserContextFilter.class}
+                classes = {JwtAuthFilter.class, JwtTokenProvider.class}
         )
 )
 @Import({LoginMemberArgumentResolver.class, ExceptionResponseHandler.class})

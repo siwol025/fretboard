@@ -7,7 +7,6 @@ import com.fretboard.fretboard.comment.dto.request.CommentRequest;
 import com.fretboard.fretboard.comment.dto.response.CommentResponse;
 import com.fretboard.fretboard.comment.service.CommentService;
 import com.fretboard.fretboard.global.auth.resolver.LoginMemberArgumentResolver;
-import com.fretboard.fretboard.global.datasource.UserContextFilter;
 import com.fretboard.fretboard.global.exception.ExceptionResponseHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         controllers = CommentController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
-                classes = {JwtAuthFilter.class, JwtTokenProvider.class, UserContextFilter.class}
+                classes = {JwtAuthFilter.class, JwtTokenProvider.class}
         )
 )
 @Import({LoginMemberArgumentResolver.class, ExceptionResponseHandler.class})

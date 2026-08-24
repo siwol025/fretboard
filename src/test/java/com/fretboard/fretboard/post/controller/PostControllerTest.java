@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fretboard.fretboard.auth.jwt.JwtAuthFilter;
 import com.fretboard.fretboard.auth.jwt.JwtTokenProvider;
 import com.fretboard.fretboard.global.auth.resolver.LoginMemberArgumentResolver;
-import com.fretboard.fretboard.global.datasource.UserContextFilter;
 import com.fretboard.fretboard.global.exception.ExceptionResponseHandler;
 import com.fretboard.fretboard.global.exception.ExceptionType;
 import com.fretboard.fretboard.global.exception.FretBoardException;
@@ -42,14 +41,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * PostController 슬라이스 테스트.
- * JwtAuthFilter/JwtTokenProvider/UserContextFilter는 서블릿 필터 계층이므로 @WebMvcTest 컨텍스트에서 제외한다.
+ * JwtAuthFilter/JwtTokenProvider는 서블릿 필터 계층이므로 @WebMvcTest 컨텍스트에서 제외한다.
  * LoginMemberArgumentResolver와 ExceptionResponseHandler는 컨트롤러 동작에 필요하므로 명시적으로 임포트한다.
  */
 @WebMvcTest(
         controllers = PostController.class,
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
-                classes = {JwtAuthFilter.class, JwtTokenProvider.class, UserContextFilter.class}
+                classes = {JwtAuthFilter.class, JwtTokenProvider.class}
         )
 )
 @Import({LoginMemberArgumentResolver.class, ExceptionResponseHandler.class})
