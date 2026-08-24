@@ -56,9 +56,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * <p>참고: 실제 시간 기반 TTL 만료는 Redis 없이 단위 테스트로 검증 불가하므로,
  * TTL 만료를 "엔트리 제거(clear)"로 시뮬레이션해 재조회 시 캐시 재적재(cache-aside)를 검증한다.
  * TTL 값 자체(POPULAR_TTL_SECONDS=60)는 Task 1의 RedisCacheConfigTest에서 검증된다.
- *
- * <p>@Analytics/WorkloadRoutingAspect 는 이 컨텍스트에 포함하지 않는다(순수 @Cacheable 동작만 검증).
- * 애스펙트 빈이 없어도 @Cacheable 은 정상 동작하며, @Analytics 는 런타임에 선택적이다.
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {

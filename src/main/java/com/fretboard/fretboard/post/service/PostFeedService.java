@@ -3,7 +3,6 @@ package com.fretboard.fretboard.post.service;
 import com.fretboard.fretboard.board.domain.Board;
 import com.fretboard.fretboard.board.repository.BoardRepository;
 import com.fretboard.fretboard.global.common.CacheKey;
-import com.fretboard.fretboard.global.datasource.Analytics;
 import com.fretboard.fretboard.post.domain.Post;
 import com.fretboard.fretboard.post.dto.PostSearchResultProjection;
 import com.fretboard.fretboard.post.dto.PostSearchSummaryDto;
@@ -40,7 +39,6 @@ public class PostFeedService {
     private final PopularScoreService popularScoreService;
     private final com.fretboard.fretboard.global.config.PopularProperties popularProperties;
 
-    @Analytics
     @Cacheable(
             cacheNames = CacheKey.POPULAR_TODAY,
             key = CacheKey.POPULAR_TODAY_KEY,
@@ -109,7 +107,6 @@ public class PostFeedService {
         return PostListResponse.of(resultPage);
     }
 
-    @Analytics
     public PostSearchListResponse searchPosts(final Long boardId, final String keyword, Pageable pageable) {
         Page<PostSearchResultProjection> posts = postRepository.searchByBoardIdAndKeyword(
                 boardId, keyword, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
@@ -139,7 +136,6 @@ public class PostFeedService {
         return PostSearchListResponse.of(resultPage);
     }
 
-    @Analytics
     @Cacheable(
             cacheNames = CacheKey.RECENT_POSTS,
             key = CacheKey.RECENT_POSTS_KEY,
