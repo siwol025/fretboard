@@ -36,19 +36,33 @@ public class PostLikeService {
 
         Optional<PostLike> existingLike = postLikeRepository.findByPostIdAndMemberId(postId, memberAuth.memberId());
         if (existingLike.isEmpty()) {
-            postLikeRepository.save(PostLike.of(post, member));
-            postRepository.incrementLikeCount(postId);
+            addLike(post, member, postId);
             promoteIfPopular(post, postId);
             popularScoreService.applyLike(postId);
         } else {
-            postLikeRepository.delete(existingLike.get());
-            postRepository.decrementLikeCount(postId);
+            removeLike(existingLike.get(), postId);
             popularScoreService.cancelLike(postId);
         }
     }
 
+    /*
+     * Like-count invariant: the post_like rows are the single source of truth; post.like_count is a
+     * denormalized cache kept in lockstep with them. Every post_like insert/delete MUST go through
+     * addLike/removeLike so the row mutation and its paired counter update always happen together —
+     * never mutate post_like rows without the matching increment/decrement, or the two will drift.
+     */
+    private void addLike(Post post, Member member, Long postId) {
+        postLikeRepository.save(PostLike.of(post, member));
+        postRepository.incrementLikeCount(postId);
+    }
+
+    private void removeLike(PostLike existingLike, Long postId) {
+        postLikeRepository.delete(existingLike);
+        postRepository.decrementLikeCount(postId);
+    }
+
     private void promoteIfPopular(Post post, Long postId) {
-        if (postLikeRepository.countByPostId(postId) >= popularProperties.likeThreshold() && !post.isPopular()) {
+        if (postRepository.findLikeCountById(postId) >= popularProperties.likeThreshold() && !post.isPopular()) {
             post.promote(LocalDateTime.now(clock));
         }
     }
