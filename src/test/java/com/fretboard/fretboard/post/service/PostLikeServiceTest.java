@@ -138,7 +138,7 @@ class PostLikeServiceTest {
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
         given(authorizationHelper.getMember(memberAuth)).willReturn(member);
         given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
-        given(postLikeRepository.countByPostId(postId)).willReturn(3L);
+        given(postRepository.findLikeCountById(postId)).willReturn(3L);
 
         // when
         postLikeService.toggleLike(postId, memberAuth);
@@ -153,7 +153,7 @@ class PostLikeServiceTest {
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
         given(authorizationHelper.getMember(memberAuth)).willReturn(member);
         given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
-        given(postLikeRepository.countByPostId(postId)).willReturn(10L);
+        given(postRepository.findLikeCountById(postId)).willReturn(10L);
 
         // when
         postLikeService.toggleLike(postId, memberAuth);
@@ -169,7 +169,7 @@ class PostLikeServiceTest {
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
         given(authorizationHelper.getMember(memberAuth)).willReturn(member);
         given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
-        given(postLikeRepository.countByPostId(postId)).willReturn(9L);
+        given(postRepository.findLikeCountById(postId)).willReturn(9L);
 
         // when
         postLikeService.toggleLike(postId, memberAuth);
@@ -222,6 +222,53 @@ class PostLikeServiceTest {
 
         // then
         assertThat(post.isPopular()).isFalse();
+        verify(postRepository, never()).findLikeCountById(any());
+    }
+
+    @Test
+    void 승격판정은_findLikeCountById로_하고_countByPostId를_호출하지_않는다() {
+        // given — 새 좋아요(신규 추가), 설정된 임계값 3
+        postLikeService = newService(3);
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+        given(postRepository.findLikeCountById(postId)).willReturn(3L);
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then — 승격 판정은 findLikeCountById 로 하고 countByPostId 는 호출하지 않는다
+        assertThat(post.isPopular()).isTrue();
         verify(postLikeRepository, never()).countByPostId(any());
+    }
+
+    @Test
+    void 좋아요_추가시_incrementLikeCount_호출() {
+        // given
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.empty());
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(postRepository).incrementLikeCount(postId);
+    }
+
+    @Test
+    void 좋아요_취소시_decrementLikeCount_호출() {
+        // given
+        PostLike existingLike = PostLike.of(post, member);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(authorizationHelper.getMember(memberAuth)).willReturn(member);
+        given(postLikeRepository.findByPostIdAndMemberId(postId, 1L)).willReturn(Optional.of(existingLike));
+
+        // when
+        postLikeService.toggleLike(postId, memberAuth);
+
+        // then
+        verify(postRepository).decrementLikeCount(postId);
     }
 }

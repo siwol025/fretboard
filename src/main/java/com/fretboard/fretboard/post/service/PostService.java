@@ -100,7 +100,7 @@ public class PostService {
         Long updatedViewCount = viewCountService.incrementViewCount(id);
         popularScoreService.applyView(id);
 
-        long likeCount = postLikeRepository.countByPostId(id);
+        long likeCount = postRepository.findLikeCountById(id);
         boolean isLiked = memberAuth != null && postLikeRepository.existsByPostIdAndMemberId(id, memberAuth.memberId());
 
         CommentResponse commentResponse = commentService.findComments(id);

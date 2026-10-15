@@ -301,7 +301,7 @@ class PostServiceTest {
         given(postStaticViewLoader.load(postId)).willReturn(PostStaticView.from(post));
         given(viewCountService.hasViewCount(postId)).willReturn(true);
         given(viewCountService.incrementViewCount(postId)).willReturn(5L);
-        given(postLikeRepository.countByPostId(postId)).willReturn(3L);
+        given(postRepository.findLikeCountById(postId)).willReturn(3L);
         given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(true);
         given(commentService.findComments(postId)).willReturn(new CommentResponse(List.of()));
 
@@ -323,7 +323,7 @@ class PostServiceTest {
         given(postStaticViewLoader.load(postId)).willReturn(PostStaticView.from(post));
         given(viewCountService.hasViewCount(postId)).willReturn(true);
         given(viewCountService.incrementViewCount(postId)).willReturn(1L);
-        given(postLikeRepository.countByPostId(postId)).willReturn(0L);
+        given(postRepository.findLikeCountById(postId)).willReturn(0L);
         given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(false);
         given(commentService.findComments(postId)).willReturn(new CommentResponse(List.of()));
 
@@ -379,6 +379,28 @@ class PostServiceTest {
     }
 
     @Test
+    void 상세조회_likeCount는_post_like_count_스칼라를_사용하고_countByPostId를_호출하지_않는다() {
+        // given
+        Long postId = 1L;
+        MemberAuth memberAuth = new MemberAuth(10L);
+        Post post = createPostWithId(postId);
+
+        given(postStaticViewLoader.load(postId)).willReturn(PostStaticView.from(post));
+        given(viewCountService.hasViewCount(postId)).willReturn(true);
+        given(viewCountService.incrementViewCount(postId)).willReturn(5L);
+        given(postRepository.findLikeCountById(postId)).willReturn(7L);
+        given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(true);
+        given(commentService.findComments(postId)).willReturn(new CommentResponse(List.of()));
+
+        // when
+        PostDetailResponse response = postService.getPostDetail(postId, memberAuth);
+
+        // then — likeCount 는 비정규화 스칼라(findLikeCountById)로 소싱되고 countByPostId 는 호출되지 않아야 한다
+        assertThat(response.likeCount()).isEqualTo(7L);
+        verify(postLikeRepository, never()).countByPostId(anyLong());
+    }
+
+    @Test
     void getPostDetail_조회시_applyView_호출() {
         // given
         Long postId = 1L;
@@ -388,7 +410,7 @@ class PostServiceTest {
         given(postStaticViewLoader.load(postId)).willReturn(PostStaticView.from(post));
         given(viewCountService.hasViewCount(postId)).willReturn(true);
         given(viewCountService.incrementViewCount(postId)).willReturn(1L);
-        given(postLikeRepository.countByPostId(postId)).willReturn(0L);
+        given(postRepository.findLikeCountById(postId)).willReturn(0L);
         given(postLikeRepository.existsByPostIdAndMemberId(postId, 10L)).willReturn(false);
         given(commentService.findComments(postId)).willReturn(new CommentResponse(List.of()));
 

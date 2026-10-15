@@ -187,6 +187,21 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("UPDATE Post p SET p.viewCount = :viewCount WHERE p.id = :postId")
     void updateViewCount(@Param("postId") Long postId, @Param("viewCount") Long viewCount);
 
+    /*
+     * updateViewCount 와 달리 @Modifying(clearAutomatically = true) 를 의도적으로 쓰지 않는다.
+     * toggleLike 에서 post 엔티티는 managed 상태이고 promoteIfPopular 가 post.promote() 로
+     * 이를 변경한 뒤 dirty-checking flush 에 의존하는데, 여기서 영속성 컨텍스트를 clear 하면
+     * post 가 detach 되어 승격이 조용히 유실된다. like 카운트는 managed 엔티티가 아니라
+     * findLikeCountById 쿼리로 읽으므로 1차 캐시 stale 은 문제되지 않는다.
+     */
+    @Modifying
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId")
+    void incrementLikeCount(@Param("postId") Long postId);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId")
+    void decrementLikeCount(@Param("postId") Long postId);
+
     @Query("""
                 SELECT p FROM Post p
                 JOIN FETCH p.member
@@ -196,4 +211,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 WHERE p.id = :id
             """)
     Optional<Post> findPostDetailById(@Param("id") Long id);
+
+    @Query("SELECT p.likeCount FROM Post p WHERE p.id = :postId")
+    Long findLikeCountById(@Param("postId") Long postId);
 }

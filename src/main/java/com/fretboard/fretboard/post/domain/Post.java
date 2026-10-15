@@ -24,12 +24,17 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(indexes = {
         @Index(name = "idx_post_board_created_id", columnList = "board_id, created_at, id"),
         @Index(name = "idx_post_member_created_id", columnList = "member_id, created_at, id")
 })
+// like_count/view_count 는 bulk @Modifying UPDATE 로 갱신되어 managed 엔티티 스냅샷과 어긋난다.
+// @DynamicUpdate 없이 promote()/edit() 의 dirty flush 가 발생하면 전체 컬럼 UPDATE 가 stale 한
+// like_count 스냅샷을 되써서 bulk 증가분을 덮어버린다. 변경된 컬럼만 UPDATE 하도록 하여 방지한다.
+@DynamicUpdate
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -57,6 +62,9 @@ public class Post extends BaseEntity {
 
     @Column(nullable = false)
     private Long viewCount = 0L;
+
+    @Column(nullable = false)
+    private Long likeCount = 0L;
 
     @Column(name = "popular_at")
     private LocalDateTime popularAt;
